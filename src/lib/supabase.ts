@@ -8,11 +8,13 @@ import { isSupabaseConfigured, supabaseConfig } from './env';
 
 /** Keeps `createClient` from throwing before `.env` is filled in. */
 const FALLBACK_URL = 'https://placeholder.supabase.co';
-const FALLBACK_KEY = 'placeholder-anon-key';
+const FALLBACK_KEY = 'sb_publishable_placeholder';
 
+// The second argument takes whichever client-side key the project issues —
+// a `sb_publishable_...` key on current projects, or a legacy anon JWT.
 export const supabase = createClient(
   isSupabaseConfigured ? supabaseConfig.url : FALLBACK_URL,
-  isSupabaseConfigured ? supabaseConfig.anonKey : FALLBACK_KEY,
+  isSupabaseConfigured ? supabaseConfig.publishableKey : FALLBACK_KEY,
   {
     auth: {
       storage: AsyncStorage,

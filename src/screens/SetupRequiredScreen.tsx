@@ -6,7 +6,7 @@ import { useTheme } from '../theme';
 
 const STEPS = [
   'Create a project at supabase.com and open Project Settings → API.',
-  'Copy the Project URL and the anon public key.',
+  'Copy the Project URL and the publishable key (sb_publishable_…).',
   'Paste them into a .env file in the project root (see .env.example).',
   'Run the SQL in supabase/schema.sql in the Supabase SQL editor.',
   'Restart the dev server with `npx expo start --clear`.',

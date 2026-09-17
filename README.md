@@ -10,7 +10,7 @@ and the character system come in later stages.
 
 ```bash
 npm install
-cp .env.example .env    # then fill in your Supabase URL + anon key
+cp .env.example .env    # then fill in your Supabase URL + publishable key
 npm start
 ```
 
@@ -20,7 +20,8 @@ credentials the app shows a setup screen instead of the login form.
 ### Supabase setup
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. **Project Settings → API**: copy the Project URL and the `anon` public key into `.env`.
+2. **Project Settings → API**: copy the Project URL and the publishable key (`sb_publishable_…`,
+   what older projects called the `anon` key) into `.env`. The secret key never goes in the app.
 3. **SQL Editor**: run [`supabase/schema.sql`](supabase/schema.sql) to create the `profiles`
    table, its row level security policies, and the signup trigger.
 4. **Authentication → Providers → Email**: for faster local testing, turn off "Confirm email".
