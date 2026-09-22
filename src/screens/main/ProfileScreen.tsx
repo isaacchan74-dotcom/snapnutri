@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { useState } from 'react';
 
 import {
   AppText,
@@ -15,17 +14,15 @@ import {
 import { ACTIVITY_LABELS, GENDER_LABELS, GOAL_LABELS } from '../../constants/profileOptions';
 import { formatHeight, formatWeight } from '../../lib/units';
 import { useAuthStore } from '../../store/authStore';
-import { useTheme, useThemeControls, type ThemeMode } from '../../theme';
+import { useThemeControls, type ThemeMode } from '../../theme';
 
 export function ProfileScreen() {
-  const theme = useTheme();
   const { mode, availableModes, setMode, labels } = useThemeControls();
-
   const user = useAuthStore((state) => state.user);
   const profile = useAuthStore((state) => state.profile);
   const signOut = useAuthStore((state) => state.signOut);
-
   const [signingOut, setSigningOut] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const themeSegments: Segment<ThemeMode>[] = availableModes.map((themeMode) => ({
     value: themeMode,
@@ -33,66 +30,51 @@ export function ProfileScreen() {
     emoji: labels[themeMode].emoji,
   }));
 
-  const handleSignOut = () => {
-    Alert.alert('Log out?', "Your journal will be right here when you're back.", [
-      { text: 'Stay', style: 'cancel' },
-      {
-        text: 'Log out',
-        style: 'destructive',
-        onPress: async () => {
-          setSigningOut(true);
-          const result = await signOut();
-          setSigningOut(false);
-          if (result.error) Alert.alert('Could not log out', result.error);
-        },
-      },
-    ]);
+  const handleSignOut = async () => {
+    if (!window.confirm("Log out? Your journal will be right here when you're back.")) {
+      return;
+    }
+
+    setSigningOut(true);
+    const result = await signOut();
+    setSigningOut(false);
+    if (result.error) setError(result.error);
   };
 
   const initial = (user?.email ?? '?').charAt(0).toUpperCase();
 
   return (
     <ScreenContainer title="Profile" subtitle="Your numbers, your look, your account.">
-      <View style={{ gap: theme.spacing.xl }}>
-        <Card padding="md">
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.lg }}>
-            <View
-              style={{
-                width: theme.layout.avatarSize,
-                height: theme.layout.avatarSize,
-                borderRadius: theme.radius.pill,
-                backgroundColor: theme.colors.primarySoft,
-                borderWidth: theme.borderWidth.thick,
-                borderColor: theme.colors.primary,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <AppText variant="title" color="brand">
+      <div className="stack">
+        {error ? <Banner message={error} /> : null}
+
+        <Card>
+          <div className="row">
+            <div className="avatar">
+              <AppText as="span" variant="title" color="brand">
                 {initial}
               </AppText>
-            </View>
-
-            <View style={{ flex: 1, gap: theme.spacing.xxs }}>
-              <AppText variant="subtitle" numberOfLines={1}>
-                {user?.email ?? 'Signed in'}
-              </AppText>
+            </div>
+            <div className="stack stack--sm">
+              <AppText variant="subtitle">{user?.email ?? 'Signed in'}</AppText>
               <AppText variant="caption" color="secondary">
                 {profile?.goal ? GOAL_LABELS[profile.goal] : 'Goal not set yet'}
               </AppText>
-            </View>
-          </View>
+            </div>
+          </div>
         </Card>
 
-        <View style={{ gap: theme.spacing.md }}>
-          <AppText variant="heading">Daily targets</AppText>
+        <div className="stack stack--md">
+          <AppText as="h2" variant="heading">
+            Daily targets
+          </AppText>
 
           {profile?.daily_calorie_target != null ? (
             <>
-              <Card tone="brand" elevation="soft">
-                <View style={{ gap: theme.spacing.xs, alignItems: 'center' }}>
+              <Card tone="brand">
+                <div className="metric-block">
                   <AppText variant="label" color="secondary">
-                    CALORIES
+                    Calories
                   </AppText>
                   <AppText variant="metric" color="brand">
                     {profile.daily_calorie_target.toLocaleString()}
@@ -100,78 +82,67 @@ export function ProfileScreen() {
                   <AppText variant="caption" color="secondary">
                     kcal per day
                   </AppText>
-                </View>
+                </div>
               </Card>
-
-              <View style={{ flexDirection: 'row', gap: theme.spacing.md }}>
+              <div className="row row--grow">
                 <StatTile
                   label="Protein"
                   value={String(profile.daily_protein_target ?? 0)}
                   unit="g"
-                  accentColor={theme.colors.protein}
+                  accentVar="--color-protein"
                 />
                 <StatTile
                   label="Carbs"
                   value={String(profile.daily_carb_target ?? 0)}
                   unit="g"
-                  accentColor={theme.colors.carbs}
+                  accentVar="--color-carbs"
                 />
                 <StatTile
                   label="Fat"
                   value={String(profile.daily_fat_target ?? 0)}
                   unit="g"
-                  accentColor={theme.colors.fat}
+                  accentVar="--color-fat"
                 />
-              </View>
+              </div>
             </>
           ) : (
             <Banner tone="info" message="Finish onboarding to unlock your personalised targets." />
           )}
-        </View>
+        </div>
 
-        <View style={{ gap: theme.spacing.md }}>
-          <AppText variant="heading">Your details</AppText>
-          <Card padding="md">
-            <InfoRow
-              label="Sex"
-              value={profile?.gender ? GENDER_LABELS[profile.gender] : '—'}
-            />
+        <div className="stack stack--md">
+          <AppText as="h2" variant="heading">
+            Your details
+          </AppText>
+          <Card>
+            <InfoRow label="Sex" value={profile?.gender ? GENDER_LABELS[profile.gender] : '—'} />
             <InfoRow label="Age" value={profile?.age ? `${profile.age} years` : '—'} />
-            <InfoRow
-              label="Height"
-              value={profile?.height ? formatHeight(profile.height) : '—'}
-            />
-            <InfoRow
-              label="Weight"
-              value={profile?.weight ? formatWeight(profile.weight) : '—'}
-            />
+            <InfoRow label="Height" value={profile?.height ? formatHeight(profile.height) : '—'} />
+            <InfoRow label="Weight" value={profile?.weight ? formatWeight(profile.weight) : '—'} />
             <InfoRow
               label="Activity"
               value={profile?.activity_level ? ACTIVITY_LABELS[profile.activity_level] : '—'}
               last
             />
           </Card>
-        </View>
+        </div>
 
-        <View style={{ gap: theme.spacing.md }}>
-          <AppText variant="heading">Appearance</AppText>
-          <Card padding="md">
-            <View style={{ gap: theme.spacing.md }}>
+        <div className="stack stack--md">
+          <AppText as="h2" variant="heading">
+            Appearance
+          </AppText>
+          <Card>
+            <div className="stack stack--md">
               <AppText variant="caption" color="secondary">
                 Pick a vibe. It sticks between sessions.
               </AppText>
               <SegmentedControl segments={themeSegments} value={mode} onChange={setMode} />
-            </View>
+            </div>
           </Card>
-        </View>
+        </div>
 
-        <Button
-          label="Log out"
-          variant="danger"
-          onPress={handleSignOut}
-          loading={signingOut}
-        />
-      </View>
+        <Button label="Log out" variant="danger" onClick={handleSignOut} loading={signingOut} />
+      </div>
     </ScreenContainer>
   );
 }

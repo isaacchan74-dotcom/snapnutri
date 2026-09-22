@@ -1,7 +1,3 @@
-import React from 'react';
-import { Pressable, View } from 'react-native';
-
-import { useTheme } from '../theme';
 import { AppText } from './AppText';
 
 type OptionTileProps = {
@@ -9,62 +5,42 @@ type OptionTileProps = {
   description?: string;
   emoji?: string;
   selected: boolean;
-  onPress: () => void;
+  onSelect: () => void;
 };
 
-/** Single-select row used throughout onboarding. */
-export function OptionTile({ label, description, emoji, selected, onPress }: OptionTileProps) {
-  const theme = useTheme();
-
+export function OptionTile({ label, description, emoji, selected, onSelect }: OptionTileProps) {
   return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={({ pressed }) => [
-        {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: theme.spacing.lg,
-          padding: theme.spacing.lg,
-          borderRadius: theme.radius.lg,
-          borderWidth: theme.borderWidth.thick,
-          borderColor: selected ? theme.colors.primary : theme.colors.border,
-          backgroundColor: selected ? theme.colors.primarySoft : theme.colors.surface,
-          opacity: pressed ? theme.opacity.pressed : theme.opacity.full,
-        },
-        selected ? theme.shadows.soft : theme.shadows.none,
-      ]}
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      className={selected ? 'option-tile option-tile--selected' : 'option-tile'}
+      onClick={onSelect}
     >
-      {emoji ? <AppText variant="heading">{emoji}</AppText> : null}
+      {emoji ? (
+        <AppText as="span" variant="heading">
+          {emoji}
+        </AppText>
+      ) : null}
 
-      <View style={{ flex: 1, gap: theme.spacing.xxs }}>
-        <AppText variant="bodyStrong">{label}</AppText>
+      <span className="option-tile__copy">
+        <AppText as="span" variant="bodyStrong">
+          {label}
+        </AppText>
         {description ? (
-          <AppText variant="caption" color="secondary">
+          <AppText as="span" variant="caption" color="secondary">
             {description}
           </AppText>
         ) : null}
-      </View>
+      </span>
 
-      <View
-        style={{
-          width: theme.iconSize.md,
-          height: theme.iconSize.md,
-          borderRadius: theme.radius.pill,
-          borderWidth: theme.borderWidth.thick,
-          borderColor: selected ? theme.colors.primary : theme.colors.borderStrong,
-          backgroundColor: selected ? theme.colors.primary : 'transparent',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <span className="option-tile__radio" aria-hidden>
         {selected ? (
-          <AppText variant="caption" color="onPrimary" weight="heavy">
+          <AppText as="span" variant="caption" color="onPrimary">
             ✓
           </AppText>
         ) : null}
-      </View>
-    </Pressable>
+      </span>
+    </button>
   );
 }

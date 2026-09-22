@@ -1,8 +1,7 @@
-import type { ViewStyle } from 'react-native';
-
 import {
   borderWidth,
   duration,
+  fontFamily,
   fontSize,
   fontWeight,
   iconSize,
@@ -13,58 +12,34 @@ import {
   spacing,
   typography,
 } from './tokens';
-import {
-  modeAppearance,
-  palettes,
-  type ColorTokens,
-  type ThemeMode,
-} from './palettes';
+import { modeAppearance, palettes, type ColorTokens, type ThemeMode } from './palettes';
 
 export type ShadowTokens = {
-  none: ViewStyle;
-  soft: ViewStyle;
-  card: ViewStyle;
-  raised: ViewStyle;
+  none: string;
+  soft: string;
+  card: string;
+  raised: string;
 };
 
-/**
- * Shadows depend on the palette, so they are built per mode.
- * Dark-ish modes get a deeper, lower-opacity shadow so cards stay readable.
- */
 function createShadows(colors: ColorTokens, mode: ThemeMode): ShadowTokens {
   const isLight = modeAppearance[mode] === 'light';
-  const shadowOpacity = isLight ? 0.08 : 0.35;
+  const alpha = isLight ? 0.08 : 0.35;
 
   return {
-    none: {
-      shadowColor: 'transparent',
-      shadowOpacity: 0,
-      shadowRadius: 0,
-      shadowOffset: { width: 0, height: 0 },
-      elevation: 0,
-    },
-    soft: {
-      shadowColor: colors.shadow,
-      shadowOpacity: shadowOpacity * 0.6,
-      shadowRadius: 6,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 1,
-    },
-    card: {
-      shadowColor: colors.shadow,
-      shadowOpacity,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 2,
-    },
-    raised: {
-      shadowColor: colors.shadow,
-      shadowOpacity: shadowOpacity * 1.3,
-      shadowRadius: 20,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 6,
-    },
+    none: 'none',
+    soft: `0 2px 6px ${hexToRgba(colors.shadow, alpha * 0.6)}`,
+    card: `0 4px 12px ${hexToRgba(colors.shadow, alpha)}`,
+    raised: `0 8px 20px ${hexToRgba(colors.shadow, alpha * 1.3)}`,
   };
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const raw = hex.replace('#', '');
+  const value = raw.length === 3 ? raw.split('').map((c) => c + c).join('') : raw;
+  const r = Number.parseInt(value.slice(0, 2), 16);
+  const g = Number.parseInt(value.slice(2, 4), 16);
+  const b = Number.parseInt(value.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 export type Theme = {
@@ -81,6 +56,7 @@ export type Theme = {
   opacity: typeof opacity;
   iconSize: typeof iconSize;
   duration: typeof duration;
+  fontFamily: typeof fontFamily;
   layout: typeof layout;
   typography: typeof typography;
 };
@@ -102,12 +78,12 @@ function createTheme(mode: ThemeMode): Theme {
     opacity,
     iconSize,
     duration,
+    fontFamily,
     layout,
     typography,
   };
 }
 
-/** Pre-built so a theme switch is a reference swap, not a rebuild. */
 export const themes: Record<ThemeMode, Theme> = {
   light: createTheme('light'),
   dark: createTheme('dark'),

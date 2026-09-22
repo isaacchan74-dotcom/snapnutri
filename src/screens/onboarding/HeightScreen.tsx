@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
-import { View } from 'react-native';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { AppText, SegmentedControl, TextField } from '../../components';
 import { INPUT_LIMITS } from '../../constants/profileOptions';
 import { cmToFeetInches, feetInchesToCm, type HeightUnit } from '../../lib/units';
-import type { OnboardingScreenProps } from '../../navigation/types';
 import { useOnboardingStore } from '../../store/onboardingStore';
-import { useTheme } from '../../theme';
 import { OnboardingStep } from './OnboardingStep';
 
 const UNIT_SEGMENTS = [
@@ -14,8 +12,8 @@ const UNIT_SEGMENTS = [
   { value: 'cm' as HeightUnit, label: 'cm' },
 ];
 
-export function HeightScreen({ navigation }: OnboardingScreenProps<'Height'>) {
-  const theme = useTheme();
+export function HeightScreen() {
+  const navigate = useNavigate();
   const storedHeight = useOnboardingStore((state) => state.height);
   const unit = useOnboardingStore((state) => state.heightUnit);
   const setUnit = useOnboardingStore((state) => state.setHeightUnit);
@@ -36,19 +34,16 @@ export function HeightScreen({ navigation }: OnboardingScreenProps<'Height'>) {
     Number.isFinite(heightCm) &&
     heightCm >= INPUT_LIMITS.heightCm.min &&
     heightCm <= INPUT_LIMITS.heightCm.max;
-  const showError = hasInput && !inRange;
-
-  const handleContinue = () => {
-    update({ height: Math.round(heightCm) });
-    navigation.navigate('Weight');
-  };
 
   return (
     <OnboardingStep
       step={3}
       title="How tall are you?"
       subtitle="Rough is fine — nobody's measuring against a door frame."
-      onContinue={handleContinue}
+      onContinue={() => {
+        update({ height: Math.round(heightCm) });
+        navigate('/onboarding/weight');
+      }}
       continueDisabled={!inRange}
     >
       <SegmentedControl segments={UNIT_SEGMENTS} value={unit} onChange={setUnit} size="sm" />
@@ -57,52 +52,48 @@ export function HeightScreen({ navigation }: OnboardingScreenProps<'Height'>) {
         <TextField
           label="Height"
           value={cm}
-          onChangeText={setCm}
+          onChange={(event) => setCm(event.target.value)}
           placeholder="175"
-          keyboardType="number-pad"
+          inputMode="numeric"
           maxLength={3}
           trailing={
-            <AppText variant="caption" color="muted">
+            <AppText as="span" variant="caption" color="muted">
               cm
             </AppText>
           }
         />
       ) : (
-        <View style={{ flexDirection: 'row', gap: theme.spacing.md }}>
-          <View style={{ flex: 1 }}>
-            <TextField
-              label="Feet"
-              value={feet}
-              onChangeText={setFeet}
-              placeholder="5"
-              keyboardType="number-pad"
-              maxLength={1}
-              trailing={
-                <AppText variant="caption" color="muted">
-                  ft
-                </AppText>
-              }
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <TextField
-              label="Inches"
-              value={inches}
-              onChangeText={setInches}
-              placeholder="9"
-              keyboardType="number-pad"
-              maxLength={2}
-              trailing={
-                <AppText variant="caption" color="muted">
-                  in
-                </AppText>
-              }
-            />
-          </View>
-        </View>
+        <div className="row row--grow">
+          <TextField
+            label="Feet"
+            value={feet}
+            onChange={(event) => setFeet(event.target.value)}
+            placeholder="5"
+            inputMode="numeric"
+            maxLength={1}
+            trailing={
+              <AppText as="span" variant="caption" color="muted">
+                ft
+              </AppText>
+            }
+          />
+          <TextField
+            label="Inches"
+            value={inches}
+            onChange={(event) => setInches(event.target.value)}
+            placeholder="9"
+            inputMode="numeric"
+            maxLength={2}
+            trailing={
+              <AppText as="span" variant="caption" color="muted">
+                in
+              </AppText>
+            }
+          />
+        </div>
       )}
 
-      {showError ? (
+      {hasInput && !inRange ? (
         <AppText variant="caption" color="danger">
           That looks off — try something between {INPUT_LIMITS.heightCm.min} and{' '}
           {INPUT_LIMITS.heightCm.max} cm.

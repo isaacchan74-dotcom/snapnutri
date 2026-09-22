@@ -1,19 +1,10 @@
-import React, { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 
-import {
-  AppText,
-  Banner,
-  Button,
-  ScreenContainer,
-  TextField,
-} from '../../components';
-import type { AuthScreenProps } from '../../navigation/types';
+import { AppText, Banner, Button, ScreenContainer, TextField } from '../../components';
 import { useAuthStore } from '../../store/authStore';
-import { useTheme } from '../../theme';
 
-export function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
-  const theme = useTheme();
+export function LoginScreen() {
   const signIn = useAuthStore((state) => state.signIn);
 
   const [email, setEmail] = useState('');
@@ -23,7 +14,8 @@ export function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
 
   const canSubmit = email.trim().length > 0 && password.length > 0 && !submitting;
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     setError(null);
     setSubmitting(true);
     const result = await signIn(email, password);
@@ -37,48 +29,39 @@ export function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
       title="Let's get snapping 📸"
       subtitle="Log in to pick up your food journal where you left off."
     >
-      <View style={{ gap: theme.spacing.lg }}>
+      <form className="stack" onSubmit={handleSubmit}>
         {error ? <Banner message={error} /> : null}
 
         <TextField
           label="Email"
           value={email}
-          onChangeText={setEmail}
+          onChange={(event) => setEmail(event.target.value)}
           placeholder="you@college.edu"
-          autoCapitalize="none"
           autoComplete="email"
-          keyboardType="email-address"
-          textContentType="emailAddress"
+          inputMode="email"
+          type="email"
         />
 
         <TextField
           label="Password"
           value={password}
-          onChangeText={setPassword}
+          onChange={(event) => setPassword(event.target.value)}
           placeholder="••••••••"
-          autoCapitalize="none"
           autoComplete="current-password"
-          secureTextEntry
-          textContentType="password"
-          onSubmitEditing={canSubmit ? handleSubmit : undefined}
-          returnKeyType="go"
+          type="password"
         />
 
-        <Button label="Log in" onPress={handleSubmit} loading={submitting} disabled={!canSubmit} />
+        <Button label="Log in" type="submit" loading={submitting} disabled={!canSubmit} />
 
-        <Pressable
-          onPress={() => navigation.navigate('SignUp')}
-          hitSlop={theme.layout.hitSlop}
-          style={{ alignItems: 'center', paddingVertical: theme.spacing.sm }}
-        >
-          <AppText variant="caption" color="secondary">
+        <Link to="/signup" className="link-row">
+          <AppText as="span" variant="caption" color="secondary">
             New here?{' '}
-            <AppText variant="caption" color="brand" weight="bold">
+            <AppText as="span" variant="caption" color="brand">
               Create an account
             </AppText>
           </AppText>
-        </Pressable>
-      </View>
+        </Link>
+      </form>
     </ScreenContainer>
   );
 }

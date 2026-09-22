@@ -7,17 +7,13 @@ import { supabase } from '../lib/supabase';
 import type { ProfileRow } from '../types/profile';
 
 type ActionResult = { error: string | null };
-
-/** When email confirmation is on, signup succeeds but no session is returned. */
 type SignUpResult = ActionResult & { needsEmailConfirmation: boolean };
 
 type AuthState = {
-  /** True until the persisted session has been checked on launch. */
   initializing: boolean;
   session: Session | null;
   user: User | null;
   profile: ProfileRow | null;
-  /** True while the profile row is being (re)fetched after a session change. */
   profileLoading: boolean;
 
   initialize: () => () => void;
@@ -40,10 +36,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   profile: null,
   profileLoading: false,
 
-  /**
-   * Loads any stored session and subscribes to auth changes.
-   * Returns the unsubscribe function for the caller's cleanup.
-   */
   initialize: () => {
     if (!isSupabaseConfigured) {
       set({ initializing: false });
@@ -68,10 +60,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     };
 
+    const timeout = window.setTimeout(() => {
+      set({ initializing: false });
+    }, 4000);
+
     supabase.auth
       .getSession()
       .then(({ data }) => applySession(data.session))
-      .catch(() => set({ initializing: false }));
+      .catch(() => set({ initializing: false }))
+      .finally(() => window.clearTimeout(timeout));
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       void applySession(session);
@@ -88,7 +85,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ profile: await fetchProfile(user.id) });
     } catch {
-      // Keep the cached profile if the refresh fails; the UI stays usable offline.
+      // Keep the cached profile if the refresh fails.
     } finally {
       set({ profileLoading: false });
     }

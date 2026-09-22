@@ -1,77 +1,29 @@
-import React, { useState } from 'react';
-import { TextInput, View, type TextInputProps } from 'react-native';
+import type { InputHTMLAttributes, ReactNode } from 'react';
 
-import { useTheme } from '../theme';
 import { AppText } from './AppText';
 
-type TextFieldProps = TextInputProps & {
+type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
   helper?: string;
   error?: string | null;
-  /** Rendered inside the field on the right, e.g. a "cm" / "kg" unit tag. */
-  trailing?: React.ReactNode;
+  trailing?: ReactNode;
 };
 
-export function TextField({
-  label,
-  helper,
-  error,
-  trailing,
-  onFocus,
-  onBlur,
-  style,
-  ...rest
-}: TextFieldProps) {
-  const theme = useTheme();
-  const [focused, setFocused] = useState(false);
-
-  const borderColor = error
-    ? theme.colors.danger
-    : focused
-      ? theme.colors.primary
-      : theme.colors.border;
+export function TextField({ label, helper, error, trailing, className, id, ...rest }: TextFieldProps) {
+  const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-');
 
   return (
-    <View style={{ gap: theme.spacing.xs }}>
+    <div className="field">
       {label ? (
-        <AppText variant="label" color="secondary">
-          {label.toUpperCase()}
+        <AppText as="label" variant="label" color="secondary">
+          {label}
         </AppText>
       ) : null}
 
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: theme.spacing.sm,
-          height: theme.layout.inputHeight,
-          paddingHorizontal: theme.spacing.lg,
-          borderRadius: theme.radius.md,
-          borderWidth: theme.borderWidth.thick,
-          borderColor,
-          backgroundColor: theme.colors.surfaceMuted,
-        }}
-      >
-        <TextInput
-          {...rest}
-          onFocus={(event) => {
-            setFocused(true);
-            onFocus?.(event);
-          }}
-          onBlur={(event) => {
-            setFocused(false);
-            onBlur?.(event);
-          }}
-          placeholderTextColor={theme.colors.textMuted}
-          selectionColor={theme.colors.primary}
-          style={[
-            theme.typography.body,
-            { flex: 1, color: theme.colors.textPrimary, paddingVertical: theme.spacing.none },
-            style,
-          ]}
-        />
+      <div className={error ? 'field__control field__control--error' : 'field__control'}>
+        <input id={inputId} className={['field__input', className ?? ''].join(' ')} {...rest} />
         {trailing}
-      </View>
+      </div>
 
       {error ? (
         <AppText variant="caption" color="danger">
@@ -82,6 +34,6 @@ export function TextField({
           {helper}
         </AppText>
       ) : null}
-    </View>
+    </div>
   );
 }

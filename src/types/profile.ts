@@ -16,7 +16,6 @@ export type ProfileMeasurements = {
   goal: Goal;
 };
 
-/** What the calculator derives from the measurements. */
 export type DailyTargets = {
   calories: number;
   protein: number;
@@ -41,10 +40,6 @@ export type ProfileRow = {
   created_at: string;
 };
 
-/**
- * A profile counts as onboarded once every measurement and a calorie target
- * are present. No extra column needed.
- */
 export function isProfileComplete(profile: ProfileRow | null): boolean {
   if (!profile) return false;
 

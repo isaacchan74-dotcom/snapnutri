@@ -1,7 +1,7 @@
-export { AppText, type TextColor } from './AppText';
+export { AppText, type TextColor, type TypographyVariant } from './AppText';
 export { Banner } from './Banner';
 export { Button, type ButtonSize, type ButtonVariant } from './Button';
-export { Card, type CardElevation, type CardTone } from './Card';
+export { Card, type CardTone } from './Card';
 export { EmptyState } from './EmptyState';
 export { InfoRow } from './InfoRow';
 export { LoadingScreen } from './LoadingScreen';
@@ -10,4 +10,5 @@ export { ProgressBar } from './ProgressBar';
 export { ScreenContainer } from './ScreenContainer';
 export { SegmentedControl, type Segment } from './SegmentedControl';
 export { StatTile } from './StatTile';
+export { TabBar } from './TabBar';
 export { TextField } from './TextField';

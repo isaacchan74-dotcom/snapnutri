@@ -1,5 +1,3 @@
-import type { TextStyle } from 'react-native';
-
 /**
  * Mode-independent design primitives.
  *
@@ -48,13 +46,13 @@ export const fontWeight = {
   semibold: '600',
   bold: '700',
   heavy: '800',
-} as const satisfies Record<string, TextStyle['fontWeight']>;
+} as const;
 
 export const letterSpacing = {
-  tight: -0.6,
-  normal: 0,
-  wide: 0.4,
-  wider: 1.2,
+  tight: '-0.6px',
+  normal: '0',
+  wide: '0.4px',
+  wider: '1.2px',
 } as const;
 
 export const borderWidth = {
@@ -87,25 +85,25 @@ export const duration = {
   slow: 360,
 } as const;
 
-/** Fixed layout measurements used by more than one component. */
+export const fontFamily = {
+  sans: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+} as const;
+
 export const layout = {
   screenPaddingHorizontal: spacing.xl,
   screenPaddingVertical: spacing.lg,
   maxContentWidth: 540,
-  tabBarHeight: 62,
+  appFrameWidth: 430,
+  tabBarHeight: 64,
   tabBarPaddingTop: spacing.sm,
   inputHeight: 54,
-  buttonHeight: {
-    sm: 40,
-    md: 52,
-    lg: 58,
-  },
+  buttonSm: 40,
+  buttonMd: 52,
+  buttonLg: 58,
   progressBarHeight: 10,
   avatarSize: 72,
-  hitSlop: { top: spacing.sm, bottom: spacing.sm, left: spacing.sm, right: spacing.sm },
 } as const;
 
-/** Named text styles. Colour is applied separately by the `AppText` component. */
 export const typography = {
   display: {
     fontSize: fontSize.display,
@@ -167,6 +165,6 @@ export const typography = {
     fontWeight: fontWeight.bold,
     letterSpacing: letterSpacing.wide,
   },
-} as const satisfies Record<string, TextStyle>;
+} as const;
 
 export type TypographyVariant = keyof typeof typography;

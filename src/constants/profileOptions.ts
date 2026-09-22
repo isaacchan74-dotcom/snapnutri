@@ -85,7 +85,6 @@ export const GOAL_LABELS: Record<Goal, string> = {
   gain: 'Gain weight',
 };
 
-/** Age / height / weight bounds used by the onboarding input validation. */
 export const INPUT_LIMITS = {
   age: { min: 13, max: 100 },
   heightCm: { min: 120, max: 230 },

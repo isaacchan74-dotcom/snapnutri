@@ -1,8 +1,4 @@
-import React from 'react';
-import { Text, type TextProps, type TextStyle } from 'react-native';
-
-import { useTheme } from '../theme';
-import type { TypographyVariant } from '../theme';
+import type { ReactNode } from 'react';
 
 export type TextColor =
   | 'primary'
@@ -15,46 +11,69 @@ export type TextColor =
   | 'onPrimary'
   | 'onAccent';
 
-type AppTextProps = TextProps & {
+export type TypographyVariant =
+  | 'display'
+  | 'title'
+  | 'heading'
+  | 'subtitle'
+  | 'body'
+  | 'bodyStrong'
+  | 'caption'
+  | 'label'
+  | 'metric'
+  | 'button';
+
+type AppTextProps = {
+  as?: 'p' | 'span' | 'h1' | 'h2' | 'h3' | 'label';
   variant?: TypographyVariant;
   color?: TextColor;
-  align?: TextStyle['textAlign'];
-  /** Overrides the weight baked into the variant. */
-  weight?: keyof ReturnType<typeof useTheme>['fontWeight'];
+  align?: 'left' | 'center';
+  className?: string;
+  children: ReactNode;
+};
+
+const variantClass: Record<TypographyVariant, string> = {
+  display: 'text--display',
+  title: 'text--title',
+  heading: 'text--heading',
+  subtitle: 'text--subtitle',
+  body: 'text--body',
+  bodyStrong: 'text--body-strong',
+  caption: 'text--caption',
+  label: 'text--label',
+  metric: 'text--metric',
+  button: 'text--button',
+};
+
+const colorClass: Record<TextColor, string> = {
+  primary: 'text--primary',
+  secondary: 'text--secondary',
+  muted: 'text--muted',
+  brand: 'text--brand',
+  accent: 'text--accent',
+  danger: 'text--danger',
+  success: 'text--success',
+  onPrimary: 'text--on-primary',
+  onAccent: 'text--on-accent',
 };
 
 export function AppText({
+  as: Tag = 'p',
   variant = 'body',
   color = 'primary',
   align,
-  weight,
-  style,
-  ...rest
+  className,
+  children,
 }: AppTextProps) {
-  const theme = useTheme();
+  const classes = [
+    'text',
+    variantClass[variant],
+    colorClass[color],
+    align === 'center' ? 'text--center' : '',
+    className ?? '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-  const colorMap: Record<TextColor, string> = {
-    primary: theme.colors.textPrimary,
-    secondary: theme.colors.textSecondary,
-    muted: theme.colors.textMuted,
-    brand: theme.colors.primary,
-    accent: theme.colors.accent,
-    danger: theme.colors.danger,
-    success: theme.colors.success,
-    onPrimary: theme.colors.textOnPrimary,
-    onAccent: theme.colors.textOnAccent,
-  };
-
-  return (
-    <Text
-      {...rest}
-      style={[
-        theme.typography[variant],
-        { color: colorMap[color] },
-        align ? { textAlign: align } : null,
-        weight ? { fontWeight: theme.fontWeight[weight] } : null,
-        style,
-      ]}
-    />
-  );
+  return <Tag className={classes}>{children}</Tag>;
 }

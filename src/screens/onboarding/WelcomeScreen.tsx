@@ -1,9 +1,6 @@
-import React from 'react';
-import { View } from 'react-native';
+import { useNavigate } from 'react-router-dom';
 
 import { AppText, Button, Card, ScreenContainer } from '../../components';
-import type { OnboardingScreenProps } from '../../navigation/types';
-import { useTheme } from '../../theme';
 
 const PERKS = [
   { emoji: '📸', text: 'Snap a photo, skip the search bar.' },
@@ -11,39 +8,41 @@ const PERKS = [
   { emoji: '🔥', text: 'Streaks that make it stupidly easy to keep going.' },
 ];
 
-export function WelcomeScreen({ navigation }: OnboardingScreenProps<'Welcome'>) {
-  const theme = useTheme();
+export function WelcomeScreen() {
+  const navigate = useNavigate();
 
   return (
     <ScreenContainer
       center
-      footer={<Button label="Let's go" onPress={() => navigation.navigate('Gender')} />}
+      footer={<Button label="Let's go" onClick={() => navigate('/onboarding/gender')} />}
     >
-      <View style={{ gap: theme.spacing.xl, alignItems: 'center' }}>
-        <AppText variant="display">🥑</AppText>
-
-        <View style={{ gap: theme.spacing.sm }}>
+      <div className="stack stack--center">
+        <AppText as="span" variant="display">
+          🥑
+        </AppText>
+        <div className="stack stack--sm">
           <AppText variant="title" align="center">
             Welcome to SnapNutri
           </AppText>
           <AppText variant="body" color="secondary" align="center">
             Six quick questions and we'll build your daily targets. No clipboards, we promise.
           </AppText>
-        </View>
-
-        <View style={{ gap: theme.spacing.md, alignSelf: 'stretch' }}>
+        </div>
+        <div className="stack stack--md stack--stretch">
           {PERKS.map((perk) => (
-            <Card key={perk.emoji} tone="muted" elevation="none" padding="sm">
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md }}>
-                <AppText variant="subtitle">{perk.emoji}</AppText>
-                <AppText variant="body" style={{ flex: 1 }}>
+            <Card key={perk.emoji} tone="muted" padding="sm">
+              <div className="row">
+                <AppText as="span" variant="subtitle">
+                  {perk.emoji}
+                </AppText>
+                <AppText as="span" variant="body">
                   {perk.text}
                 </AppText>
-              </View>
+              </div>
             </Card>
           ))}
-        </View>
-      </View>
+        </div>
+      </div>
     </ScreenContainer>
   );
 }

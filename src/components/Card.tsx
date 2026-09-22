@@ -1,58 +1,29 @@
-import React from 'react';
-import { View, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import type { HTMLAttributes, ReactNode } from 'react';
 
-import { useTheme } from '../theme';
+export type CardTone = 'surface' | 'muted' | 'brand' | 'accent';
 
-export type CardTone = 'surface' | 'muted' | 'brand' | 'accent' | 'danger';
-export type CardElevation = 'none' | 'soft' | 'card' | 'raised';
-
-type CardProps = ViewProps & {
+type CardProps = HTMLAttributes<HTMLDivElement> & {
   tone?: CardTone;
-  elevation?: CardElevation;
-  padding?: 'none' | 'sm' | 'md' | 'lg';
-  bordered?: boolean;
-  style?: StyleProp<ViewStyle>;
+  padding?: 'sm' | 'md' | 'lg';
+  children: ReactNode;
 };
 
-export function Card({
-  tone = 'surface',
-  elevation = 'card',
-  padding = 'md',
-  bordered = true,
-  style,
-  ...rest
-}: CardProps) {
-  const theme = useTheme();
-
-  const toneMap: Record<CardTone, { background: string; border: string }> = {
-    surface: { background: theme.colors.surface, border: theme.colors.border },
-    muted: { background: theme.colors.surfaceMuted, border: theme.colors.border },
-    brand: { background: theme.colors.primarySoft, border: theme.colors.primary },
-    accent: { background: theme.colors.accentSoft, border: theme.colors.accent },
-    danger: { background: theme.colors.dangerSoft, border: theme.colors.danger },
-  };
-
-  const paddingMap = {
-    none: theme.spacing.none,
-    sm: theme.spacing.md,
-    md: theme.spacing.lg,
-    lg: theme.spacing.xl,
-  } as const;
+export function Card({ tone = 'surface', padding = 'md', className, children, ...rest }: CardProps) {
+  const classes = [
+    'card',
+    tone === 'muted' ? 'card--muted' : '',
+    tone === 'brand' ? 'card--brand' : '',
+    tone === 'accent' ? 'card--accent' : '',
+    padding === 'sm' ? 'card--sm' : '',
+    padding === 'lg' ? 'card--lg' : '',
+    className ?? '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <View
-      {...rest}
-      style={[
-        {
-          backgroundColor: toneMap[tone].background,
-          borderRadius: theme.radius.lg,
-          borderWidth: bordered ? theme.borderWidth.hairline : theme.borderWidth.none,
-          borderColor: toneMap[tone].border,
-          padding: paddingMap[padding],
-        },
-        theme.shadows[elevation],
-        style,
-      ]}
-    />
+    <div className={classes} {...rest}>
+      {children}
+    </div>
   );
 }

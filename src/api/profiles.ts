@@ -3,16 +3,11 @@ import type { DailyTargets, ProfileMeasurements, ProfileRow } from '../types/pro
 
 const TABLE = 'profiles';
 
-/** Returns null when the row does not exist yet (brand new signup). */
 export async function fetchProfile(userId: string): Promise<ProfileRow | null> {
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select('*')
-    .eq('id', userId)
-    .maybeSingle<ProfileRow>();
+  const { data, error } = await supabase.from(TABLE).select('*').eq('id', userId).maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data;
+  return data as ProfileRow | null;
 }
 
 type SaveProfileInput = {
@@ -22,7 +17,6 @@ type SaveProfileInput = {
   targets: DailyTargets;
 };
 
-/** Writes onboarding answers and computed targets in one upsert. */
 export async function saveProfile({
   userId,
   email,
@@ -49,8 +43,8 @@ export async function saveProfile({
       { onConflict: 'id' },
     )
     .select('*')
-    .single<ProfileRow>();
+    .single();
 
   if (error) throw new Error(error.message);
-  return data;
+  return data as ProfileRow;
 }

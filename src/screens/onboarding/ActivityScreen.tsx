@@ -1,12 +1,12 @@
-import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { OptionTile } from '../../components';
 import { ACTIVITY_OPTIONS } from '../../constants/profileOptions';
-import type { OnboardingScreenProps } from '../../navigation/types';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { OnboardingStep } from './OnboardingStep';
 
-export function ActivityScreen({ navigation }: OnboardingScreenProps<'Activity'>) {
+export function ActivityScreen() {
+  const navigate = useNavigate();
   const activityLevel = useOnboardingStore((state) => state.activityLevel);
   const update = useOnboardingStore((state) => state.update);
 
@@ -15,7 +15,7 @@ export function ActivityScreen({ navigation }: OnboardingScreenProps<'Activity'>
       step={5}
       title="How much do you move?"
       subtitle="Be honest — walking to the dining hall counts for less than you'd hope."
-      onContinue={() => navigation.navigate('Goal')}
+      onContinue={() => navigate('/onboarding/goal')}
       continueDisabled={activityLevel == null}
     >
       {ACTIVITY_OPTIONS.map((option) => (
@@ -25,7 +25,7 @@ export function ActivityScreen({ navigation }: OnboardingScreenProps<'Activity'>
           description={option.description}
           emoji={option.emoji}
           selected={activityLevel === option.value}
-          onPress={() => update({ activityLevel: option.value })}
+          onSelect={() => update({ activityLevel: option.value })}
         />
       ))}
     </OnboardingStep>

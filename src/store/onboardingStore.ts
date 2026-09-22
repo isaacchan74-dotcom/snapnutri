@@ -6,24 +6,19 @@ import type { ActivityLevel, Gender, Goal, ProfileMeasurements } from '../types/
 type OnboardingDraft = {
   gender: Gender | null;
   age: number | null;
-  /** Centimetres. */
   height: number | null;
-  /** Kilograms. */
   weight: number | null;
   activityLevel: ActivityLevel | null;
   goal: Goal | null;
 };
 
 type OnboardingState = OnboardingDraft & {
-  /** Remembered so the user is not re-toggling units between steps. */
   heightUnit: HeightUnit;
   weightUnit: WeightUnit;
-
   update: (patch: Partial<OnboardingDraft>) => void;
   setHeightUnit: (unit: HeightUnit) => void;
   setWeightUnit: (unit: WeightUnit) => void;
   reset: () => void;
-  /** Null until every answer has been given. */
   toMeasurements: () => ProfileMeasurements | null;
 };
 

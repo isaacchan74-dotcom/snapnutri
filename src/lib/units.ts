@@ -1,5 +1,3 @@
-/** Conversions between the metric values we store and the imperial values US students type. */
-
 const CM_PER_INCH = 2.54;
 const INCHES_PER_FOOT = 12;
 const LB_PER_KG = 2.20462;

@@ -10,13 +10,9 @@ export const THEME_MODES = ['light', 'dark', 'blue'] as const;
 export type ThemeMode = (typeof THEME_MODES)[number];
 
 export type ColorTokens = {
-  /** Page background behind all content. */
   background: string;
-  /** Default card / sheet colour. */
   surface: string;
-  /** Slightly recessed surface, e.g. inputs and inactive chips. */
   surfaceMuted: string;
-  /** Raised surface used for the tab bar and sticky footers. */
   surfaceRaised: string;
   border: string;
   borderStrong: string;
@@ -40,7 +36,6 @@ export type ColorTokens = {
   dangerSoft: string;
   info: string;
 
-  /** Macro colours, used by the journal + dashboard in later stages. */
   protein: string;
   carbs: string;
   fat: string;
@@ -180,7 +175,6 @@ const blue: ColorTokens = {
 
 export const palettes: Record<ThemeMode, ColorTokens> = { light, dark, blue };
 
-/** Drives the OS status bar and native keyboard/scroll chrome per mode. */
 export const modeAppearance: Record<ThemeMode, 'light' | 'dark'> = {
   light: 'light',
   dark: 'dark',

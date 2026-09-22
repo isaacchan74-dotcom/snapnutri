@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { EmptyState, ScreenContainer } from '../../components';
 
 export function CameraScreen() {

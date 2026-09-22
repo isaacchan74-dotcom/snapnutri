@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { AppText, SegmentedControl, TextField } from '../../components';
 import { INPUT_LIMITS } from '../../constants/profileOptions';
 import { kgToLb, lbToKg, type WeightUnit } from '../../lib/units';
-import type { OnboardingScreenProps } from '../../navigation/types';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { OnboardingStep } from './OnboardingStep';
 
@@ -12,7 +12,8 @@ const UNIT_SEGMENTS = [
   { value: 'kg' as WeightUnit, label: 'kg' },
 ];
 
-export function WeightScreen({ navigation }: OnboardingScreenProps<'Weight'>) {
+export function WeightScreen() {
+  const navigate = useNavigate();
   const storedWeight = useOnboardingStore((state) => state.weight);
   const unit = useOnboardingStore((state) => state.weightUnit);
   const setUnit = useOnboardingStore((state) => state.setWeightUnit);
@@ -29,9 +30,7 @@ export function WeightScreen({ navigation }: OnboardingScreenProps<'Weight'>) {
     Number.isFinite(weightKg) &&
     weightKg >= INPUT_LIMITS.weightKg.min &&
     weightKg <= INPUT_LIMITS.weightKg.max;
-  const showError = value.length > 0 && !inRange;
 
-  /** Keeps the number meaningful when the unit flips mid-entry. */
   const handleUnitChange = (nextUnit: WeightUnit) => {
     if (Number.isFinite(parsed)) {
       const converted = nextUnit === 'kg' ? lbToKg(parsed) : kgToLb(parsed);
@@ -40,40 +39,32 @@ export function WeightScreen({ navigation }: OnboardingScreenProps<'Weight'>) {
     setUnit(nextUnit);
   };
 
-  const handleContinue = () => {
-    update({ weight: Math.round(weightKg * 10) / 10 });
-    navigation.navigate('Activity');
-  };
-
   return (
     <OnboardingStep
       step={4}
       title="And your weight?"
       subtitle="This sets your protein target too, so give it your best guess."
-      onContinue={handleContinue}
+      onContinue={() => {
+        update({ weight: Math.round(weightKg * 10) / 10 });
+        navigate('/onboarding/activity');
+      }}
       continueDisabled={!inRange}
       footerNote="You can update this any time from your profile."
     >
-      <SegmentedControl
-        segments={UNIT_SEGMENTS}
-        value={unit}
-        onChange={handleUnitChange}
-        size="sm"
-      />
-
+      <SegmentedControl segments={UNIT_SEGMENTS} value={unit} onChange={handleUnitChange} size="sm" />
       <TextField
         label="Weight"
         value={value}
-        onChangeText={setValue}
+        onChange={(event) => setValue(event.target.value)}
         placeholder={unit === 'kg' ? '70' : '155'}
-        keyboardType="decimal-pad"
+        inputMode="decimal"
         maxLength={5}
         trailing={
-          <AppText variant="caption" color="muted">
+          <AppText as="span" variant="caption" color="muted">
             {unit}
           </AppText>
         }
-        error={showError ? 'Hmm, that number looks out of range.' : null}
+        error={value.length > 0 && !inRange ? 'Hmm, that number looks out of range.' : null}
       />
     </OnboardingStep>
   );

@@ -1,21 +1,12 @@
-import React, { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 
-import {
-  AppText,
-  Banner,
-  Button,
-  ScreenContainer,
-  TextField,
-} from '../../components';
-import type { AuthScreenProps } from '../../navigation/types';
+import { AppText, Banner, Button, ScreenContainer, TextField } from '../../components';
 import { useAuthStore } from '../../store/authStore';
-import { useTheme } from '../../theme';
 
 const MIN_PASSWORD_LENGTH = 6;
 
-export function SignUpScreen({ navigation }: AuthScreenProps<'SignUp'>) {
-  const theme = useTheme();
+export function SignUpScreen() {
   const signUp = useAuthStore((state) => state.signUp);
 
   const [email, setEmail] = useState('');
@@ -34,7 +25,8 @@ export function SignUpScreen({ navigation }: AuthScreenProps<'SignUp'>) {
     confirmPassword === password &&
     !submitting;
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     setError(null);
     setNotice(null);
     setSubmitting(true);
@@ -49,7 +41,6 @@ export function SignUpScreen({ navigation }: AuthScreenProps<'SignUp'>) {
     if (result.needsEmailConfirmation) {
       setNotice(`Almost there — confirm your email at ${email.trim()}, then log in.`);
     }
-    // Otherwise the auth listener swaps us straight into onboarding.
   };
 
   return (
@@ -58,30 +49,27 @@ export function SignUpScreen({ navigation }: AuthScreenProps<'SignUp'>) {
       title="Build your food journal 🥑"
       subtitle="One account, zero calorie spreadsheets. Takes about a minute."
     >
-      <View style={{ gap: theme.spacing.lg }}>
+      <form className="stack" onSubmit={handleSubmit}>
         {error ? <Banner message={error} /> : null}
         {notice ? <Banner tone="success" message={notice} /> : null}
 
         <TextField
           label="Email"
           value={email}
-          onChangeText={setEmail}
+          onChange={(event) => setEmail(event.target.value)}
           placeholder="you@college.edu"
-          autoCapitalize="none"
           autoComplete="email"
-          keyboardType="email-address"
-          textContentType="emailAddress"
+          inputMode="email"
+          type="email"
         />
 
         <TextField
           label="Password"
           value={password}
-          onChangeText={setPassword}
+          onChange={(event) => setPassword(event.target.value)}
           placeholder="••••••••"
-          autoCapitalize="none"
           autoComplete="new-password"
-          secureTextEntry
-          textContentType="newPassword"
+          type="password"
           helper={`At least ${MIN_PASSWORD_LENGTH} characters.`}
           error={passwordTooShort ? `Use at least ${MIN_PASSWORD_LENGTH} characters.` : null}
         />
@@ -89,36 +77,24 @@ export function SignUpScreen({ navigation }: AuthScreenProps<'SignUp'>) {
         <TextField
           label="Confirm password"
           value={confirmPassword}
-          onChangeText={setConfirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
           placeholder="••••••••"
-          autoCapitalize="none"
           autoComplete="new-password"
-          secureTextEntry
+          type="password"
           error={passwordsMismatch ? 'Passwords do not match.' : null}
-          onSubmitEditing={canSubmit ? handleSubmit : undefined}
-          returnKeyType="go"
         />
 
-        <Button
-          label="Create account"
-          onPress={handleSubmit}
-          loading={submitting}
-          disabled={!canSubmit}
-        />
+        <Button label="Create account" type="submit" loading={submitting} disabled={!canSubmit} />
 
-        <Pressable
-          onPress={() => navigation.navigate('Login')}
-          hitSlop={theme.layout.hitSlop}
-          style={{ alignItems: 'center', paddingVertical: theme.spacing.sm }}
-        >
-          <AppText variant="caption" color="secondary">
+        <Link to="/login" className="link-row">
+          <AppText as="span" variant="caption" color="secondary">
             Already have an account?{' '}
-            <AppText variant="caption" color="brand" weight="bold">
+            <AppText as="span" variant="caption" color="brand">
               Log in
             </AppText>
           </AppText>
-        </Pressable>
-      </View>
+        </Link>
+      </form>
     </ScreenContainer>
   );
 }
