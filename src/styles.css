@@ -464,6 +464,91 @@ img {
   margin-top: var(--space-sm);
 }
 
+.progress--full {
+  width: 100%;
+}
+
+.meal-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  border: var(--border-hairline) solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  text-align: left;
+}
+
+.meal-card__top,
+.meal-card__macros {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.meal-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.macro-chip {
+  padding: var(--space-xxs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-xxs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+}
+
+.macro-chip--protein {
+  color: var(--color-protein);
+  background: var(--color-danger-soft);
+}
+
+.macro-chip--carbs {
+  color: var(--color-carbs);
+  background: var(--color-primary-soft);
+}
+
+.macro-chip--fat {
+  color: var(--color-fat);
+  background: var(--color-accent-soft);
+}
+
+.target-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.target-row__copy {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.chart-frame {
+  position: relative;
+  width: 100%;
+  height: var(--layout-chart-height);
+}
+
+.chart-frame__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.field__input[type='datetime-local'] {
+  color-scheme: inherit;
+}
+
 .stat-tile {
   flex: 1;
   min-width: var(--layout-avatar-size);
@@ -490,6 +575,7 @@ img {
   gap: var(--space-md);
   padding: var(--space-xxl) 0;
   text-align: center;
+  width: 100%;
 }
 
 .empty__icon {

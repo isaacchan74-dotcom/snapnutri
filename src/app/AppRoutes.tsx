@@ -5,6 +5,7 @@ import { isSupabaseConfigured } from '../lib/env';
 import { CameraScreen } from '../screens/main/CameraScreen';
 import { DashboardScreen } from '../screens/main/DashboardScreen';
 import { JournalScreen } from '../screens/main/JournalScreen';
+import { MealFormScreen } from '../screens/main/MealFormScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { SignUpScreen } from '../screens/auth/SignUpScreen';
@@ -51,6 +52,8 @@ export function AppRoutes() {
       <Route element={<AppRoute />}>
         <Route path="/snap" element={<CameraScreen />} />
         <Route path="/journal" element={<JournalScreen />} />
+        <Route path="/journal/new" element={<MealFormScreen />} />
+        <Route path="/journal/:mealId" element={<MealFormScreen />} />
         <Route path="/dashboard" element={<DashboardScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
       </Route>

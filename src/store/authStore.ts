@@ -5,6 +5,7 @@ import { fetchProfile } from '../api/profiles';
 import { isSupabaseConfigured } from '../lib/env';
 import { supabase } from '../lib/supabase';
 import type { ProfileRow } from '../types/profile';
+import { useMealStore } from './mealStore';
 
 type ActionResult = { error: string | null };
 type SignUpResult = ActionResult & { needsEmailConfirmation: boolean };
@@ -118,6 +119,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       set({ session: null, user: null, profile: null });
+      useMealStore.setState({ meals: [], error: null, loading: false });
       return { error: null };
     } catch (error) {
       return { error: toMessage(error) };

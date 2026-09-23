@@ -102,6 +102,7 @@ export const layout = {
   buttonLg: 58,
   progressBarHeight: 10,
   avatarSize: 72,
+  chartHeight: 200,
 } as const;
 
 export const typography = {

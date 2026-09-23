@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { AppText } from './AppText';
 
 type EmptyStateProps = {
@@ -5,9 +7,10 @@ type EmptyStateProps = {
   title: string;
   message: string;
   badge?: string;
+  children?: ReactNode;
 };
 
-export function EmptyState({ emoji, title, message, badge }: EmptyStateProps) {
+export function EmptyState({ emoji, title, message, badge, children }: EmptyStateProps) {
   return (
     <div className="empty">
       <div className="empty__icon">
@@ -28,6 +31,7 @@ export function EmptyState({ emoji, title, message, badge }: EmptyStateProps) {
           </AppText>
         </div>
       ) : null}
+      {children}
     </div>
   );
 }
