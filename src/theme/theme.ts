@@ -88,4 +88,6 @@ export const themes: Record<ThemeMode, Theme> = {
   light: createTheme('light'),
   dark: createTheme('dark'),
   blue: createTheme('blue'),
+  sunset: createTheme('sunset'),
+  mint: createTheme('mint'),
 };

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'r
 
 import { useThemeStore } from '../store/themeStore';
 import { applyThemeToDocument } from './applyTheme';
-import { modeLabels, THEME_MODES, type ThemeMode } from './palettes';
+import { isThemeMode, modeLabels, THEME_MODES, type ThemeMode } from './palettes';
 import { themes, type Theme } from './theme';
 
 type ThemeContextValue = {
@@ -15,8 +15,9 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const mode = useThemeStore((state) => state.mode);
+  const storedMode = useThemeStore((state) => state.mode);
   const setMode = useThemeStore((state) => state.setMode);
+  const mode = isThemeMode(storedMode) ? storedMode : 'light';
   const theme = themes[mode];
 
   useEffect(() => {

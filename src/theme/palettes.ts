@@ -5,7 +5,7 @@
  * Every key must exist in every palette so modes stay swappable.
  */
 
-export const THEME_MODES = ['light', 'dark', 'blue'] as const;
+export const THEME_MODES = ['light', 'dark', 'blue', 'sunset', 'mint'] as const;
 
 export type ThemeMode = (typeof THEME_MODES)[number];
 
@@ -173,16 +173,106 @@ const blue: ColorTokens = {
   skeleton: '#16375A',
 };
 
-export const palettes: Record<ThemeMode, ColorTokens> = { light, dark, blue };
+const sunset: ColorTokens = {
+  background: '#FFF4EB',
+  surface: '#FFFFFF',
+  surfaceMuted: '#F8E6D6',
+  surfaceRaised: '#FFFFFF',
+  border: '#F0D2B8',
+  borderStrong: '#E0B894',
+
+  textPrimary: '#3A2415',
+  textSecondary: '#8A5A3A',
+  textMuted: '#B08968',
+  textOnPrimary: '#FFF8F1',
+  textOnAccent: '#3A2200',
+
+  primary: '#E85D04',
+  primaryPressed: '#C44B00',
+  primarySoft: '#FFE4CC',
+
+  accent: '#F4A261',
+  accentSoft: '#FFF0D6',
+
+  success: '#2FA96A',
+  warning: '#E8A020',
+  danger: '#D94841',
+  dangerSoft: '#FDE8E4',
+  info: '#3B82F6',
+
+  protein: '#E76F51',
+  carbs: '#2A9D8F',
+  fat: '#E9C46A',
+
+  tabBarBackground: '#FFFFFF',
+  tabBarActive: '#E85D04',
+  tabBarInactive: '#B08968',
+  tabBarBorder: '#F0D2B8',
+
+  overlay: 'rgba(58, 36, 21, 0.45)',
+  shadow: '#3A2415',
+  skeleton: '#F3DDCA',
+};
+
+const mint: ColorTokens = {
+  background: '#F3FAF7',
+  surface: '#FFFFFF',
+  surfaceMuted: '#E4F3EC',
+  surfaceRaised: '#FFFFFF',
+  border: '#C9E6D8',
+  borderStrong: '#A3D4BE',
+
+  textPrimary: '#12352C',
+  textSecondary: '#4A7A6A',
+  textMuted: '#7AA394',
+  textOnPrimary: '#F4FFFB',
+  textOnAccent: '#12352C',
+
+  primary: '#0F9F7B',
+  primaryPressed: '#0C8264',
+  primarySoft: '#D7F5EA',
+
+  accent: '#14B8A6',
+  accentSoft: '#E3FFF3',
+
+  success: '#2FA96A',
+  warning: '#E8A020',
+  danger: '#E04B4B',
+  dangerSoft: '#FDE8E8',
+  info: '#2A9D8F',
+
+  protein: '#FF6B6B',
+  carbs: '#2A9D8F',
+  fat: '#E9C46A',
+
+  tabBarBackground: '#FFFFFF',
+  tabBarActive: '#0F9F7B',
+  tabBarInactive: '#7AA394',
+  tabBarBorder: '#C9E6D8',
+
+  overlay: 'rgba(18, 53, 44, 0.4)',
+  shadow: '#12352C',
+  skeleton: '#DCEEE6',
+};
+
+export const palettes: Record<ThemeMode, ColorTokens> = { light, dark, blue, sunset, mint };
 
 export const modeAppearance: Record<ThemeMode, 'light' | 'dark'> = {
   light: 'light',
   dark: 'dark',
   blue: 'dark',
+  sunset: 'light',
+  mint: 'light',
 };
 
 export const modeLabels: Record<ThemeMode, { label: string; emoji: string }> = {
   light: { label: 'Light', emoji: '☀️' },
   dark: { label: 'Dark', emoji: '🌙' },
   blue: { label: 'Blue', emoji: '🌊' },
+  sunset: { label: 'Sunset', emoji: '🌅' },
+  mint: { label: 'Mint', emoji: '🌿' },
 };
+
+export function isThemeMode(value: unknown): value is ThemeMode {
+  return typeof value === 'string' && (THEME_MODES as readonly string[]).includes(value);
+}

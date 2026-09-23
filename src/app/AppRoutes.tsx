@@ -6,7 +6,9 @@ import { CameraScreen } from '../screens/main/CameraScreen';
 import { DashboardScreen } from '../screens/main/DashboardScreen';
 import { JournalScreen } from '../screens/main/JournalScreen';
 import { MealFormScreen } from '../screens/main/MealFormScreen';
+import { EditProfileScreen } from '../screens/main/EditProfileScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
+import { SettingsScreen } from '../screens/main/SettingsScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { SignUpScreen } from '../screens/auth/SignUpScreen';
 import { ActivityScreen } from '../screens/onboarding/ActivityScreen';
@@ -56,6 +58,8 @@ export function AppRoutes() {
         <Route path="/journal/:mealId" element={<MealFormScreen />} />
         <Route path="/dashboard" element={<DashboardScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
+        <Route path="/profile/edit" element={<EditProfileScreen />} />
+        <Route path="/settings" element={<SettingsScreen />} />
       </Route>
 
       <Route path="*" element={<CatchAllRedirect />} />

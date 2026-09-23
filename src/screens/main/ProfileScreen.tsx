@@ -1,53 +1,37 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   AppText,
   Banner,
   Button,
   Card,
+  GearIcon,
+  IconButton,
   InfoRow,
   ScreenContainer,
-  SegmentedControl,
   StatTile,
-  type Segment,
 } from '../../components';
 import { ACTIVITY_LABELS, GENDER_LABELS, GOAL_LABELS } from '../../constants/profileOptions';
 import { formatHeight, formatWeight } from '../../lib/units';
 import { useAuthStore } from '../../store/authStore';
-import { useThemeControls, type ThemeMode } from '../../theme';
 
 export function ProfileScreen() {
-  const { mode, availableModes, setMode, labels } = useThemeControls();
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const profile = useAuthStore((state) => state.profile);
-  const signOut = useAuthStore((state) => state.signOut);
-  const [signingOut, setSigningOut] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const themeSegments: Segment<ThemeMode>[] = availableModes.map((themeMode) => ({
-    value: themeMode,
-    label: labels[themeMode].label,
-    emoji: labels[themeMode].emoji,
-  }));
-
-  const handleSignOut = async () => {
-    if (!window.confirm("Log out? Your journal will be right here when you're back.")) {
-      return;
-    }
-
-    setSigningOut(true);
-    const result = await signOut();
-    setSigningOut(false);
-    if (result.error) setError(result.error);
-  };
-
   const initial = (user?.email ?? '?').charAt(0).toUpperCase();
 
   return (
-    <ScreenContainer title="Profile" subtitle="Your numbers, your look, your account.">
+    <ScreenContainer
+      title="Profile"
+      subtitle="Your numbers and daily targets."
+      headerRight={
+        <IconButton label="Settings" onClick={() => navigate('/settings')}>
+          <GearIcon />
+        </IconButton>
+      }
+    >
       <div className="stack">
-        {error ? <Banner message={error} /> : null}
-
         <Card>
           <div className="row">
             <div className="avatar">
@@ -65,9 +49,18 @@ export function ProfileScreen() {
         </Card>
 
         <div className="stack stack--md">
-          <AppText as="h2" variant="heading">
-            Daily targets
-          </AppText>
+          <div className="row row--spread">
+            <AppText as="h2" variant="heading">
+              Daily targets
+            </AppText>
+            <Button
+              label="Edit"
+              size="sm"
+              fullWidth={false}
+              variant="secondary"
+              onClick={() => navigate('/profile/edit')}
+            />
+          </div>
 
           {profile?.daily_calorie_target != null ? (
             <>
@@ -111,9 +104,18 @@ export function ProfileScreen() {
         </div>
 
         <div className="stack stack--md">
-          <AppText as="h2" variant="heading">
-            Your details
-          </AppText>
+          <div className="row row--spread">
+            <AppText as="h2" variant="heading">
+              Your details
+            </AppText>
+            <Button
+              label="Edit"
+              size="sm"
+              fullWidth={false}
+              variant="secondary"
+              onClick={() => navigate('/profile/edit')}
+            />
+          </div>
           <Card>
             <InfoRow label="Sex" value={profile?.gender ? GENDER_LABELS[profile.gender] : '—'} />
             <InfoRow label="Age" value={profile?.age ? `${profile.age} years` : '—'} />
@@ -126,22 +128,6 @@ export function ProfileScreen() {
             />
           </Card>
         </div>
-
-        <div className="stack stack--md">
-          <AppText as="h2" variant="heading">
-            Appearance
-          </AppText>
-          <Card>
-            <div className="stack stack--md">
-              <AppText variant="caption" color="secondary">
-                Pick a vibe. It sticks between sessions.
-              </AppText>
-              <SegmentedControl segments={themeSegments} value={mode} onChange={setMode} />
-            </div>
-          </Card>
-        </div>
-
-        <Button label="Log out" variant="danger" onClick={handleSignOut} loading={signingOut} />
       </div>
     </ScreenContainer>
   );

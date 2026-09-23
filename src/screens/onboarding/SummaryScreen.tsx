@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { saveProfile } from '../../api/profiles';
+import { saveProfileFromMeasurements } from '../../api/profiles';
 import { AppText, Banner, Button, Card, InfoRow, ScreenContainer, StatTile } from '../../components';
 import { ACTIVITY_LABELS, GOAL_LABELS } from '../../constants/profileOptions';
 import { calculateDailyTargets } from '../../lib/nutrition';
@@ -45,11 +45,10 @@ export function SummaryScreen() {
     setError(null);
     setSaving(true);
     try {
-      const profile = await saveProfile({
+      const profile = await saveProfileFromMeasurements({
         userId: user.id,
         email: user.email ?? null,
         measurements,
-        targets,
       });
       resetDraft();
       setProfile(profile);

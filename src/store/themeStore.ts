@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import type { ThemeMode } from '../theme/palettes';
+import { isThemeMode, type ThemeMode } from '../theme/palettes';
 
 type ThemeState = {
   mode: ThemeMode;
@@ -18,6 +18,13 @@ export const useThemeStore = create<ThemeState>()(
       name: 'snapnutri.theme',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ mode: state.mode }),
+      merge: (persisted, current) => {
+        const stored = persisted as { mode?: unknown } | undefined;
+        return {
+          ...current,
+          mode: isThemeMode(stored?.mode) ? stored.mode : current.mode,
+        };
+      },
     },
   ),
 );

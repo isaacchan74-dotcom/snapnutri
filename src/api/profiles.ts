@@ -1,3 +1,4 @@
+import { calculateDailyTargets } from '../lib/nutrition';
 import { supabase } from '../lib/supabase';
 import type { DailyTargets, ProfileMeasurements, ProfileRow } from '../types/profile';
 
@@ -47,4 +48,22 @@ export async function saveProfile({
 
   if (error) throw new Error(error.message);
   return data as ProfileRow;
+}
+
+/**
+ * Shared write path for onboarding and Edit Profile.
+ * Recalculates BMR → TDEE → calories → macros, then upserts the profiles row.
+ */
+export async function saveProfileFromMeasurements(input: {
+  userId: string;
+  email: string | null;
+  measurements: ProfileMeasurements;
+}): Promise<ProfileRow> {
+  const { calories, protein, carbs, fat } = calculateDailyTargets(input.measurements);
+  return saveProfile({
+    userId: input.userId,
+    email: input.email,
+    measurements: input.measurements,
+    targets: { calories, protein, carbs, fat },
+  });
 }
