@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { deleteAccountData } from '../../api/account';
 import { AppText, Banner, Button, Card, InfoRow, ScreenContainer, ThemePicker } from '../../components';
 import { useAuthStore } from '../../store/authStore';
 
@@ -9,7 +10,10 @@ export function SettingsScreen() {
   const user = useAuthStore((state) => state.user);
   const signOut = useAuthStore((state) => state.signOut);
   const [signingOut, setSigningOut] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const busy = signingOut || deleting;
 
   const handleSignOut = async () => {
     if (!window.confirm("Log out? Your journal will be right here when you're back.")) {
@@ -20,6 +24,33 @@ export function SettingsScreen() {
     const result = await signOut();
     setSigningOut(false);
     if (result.error) setError(result.error);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    if (
+      !window.confirm(
+        "Delete your SnapNutri data? This permanently removes your profile and all meals. This can't be undone.",
+      )
+    ) {
+      return;
+    }
+
+    setError(null);
+    setDeleting(true);
+    try {
+      await deleteAccountData(user.id);
+      const result = await signOut();
+      if (result.error) {
+        setError(result.error);
+        setDeleting(false);
+      }
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error ? deleteError.message : 'Could not delete your account data.',
+      );
+      setDeleting(false);
+    }
   };
 
   return (
@@ -59,6 +90,18 @@ export function SettingsScreen() {
 
         <div className="stack stack--md">
           <AppText as="h2" variant="heading">
+            Your Data & Privacy
+          </AppText>
+          <Card>
+            <AppText variant="body" color="secondary">
+              SnapNutri stores your health details and meals securely in your account. Only you can see
+              them.
+            </AppText>
+          </Card>
+        </div>
+
+        <div className="stack stack--md">
+          <AppText as="h2" variant="heading">
             About
           </AppText>
           <Card>
@@ -69,7 +112,16 @@ export function SettingsScreen() {
           </Card>
         </div>
 
-        <Button label="Log out" variant="danger" onClick={handleSignOut} loading={signingOut} />
+        <div className="stack stack--md">
+          <Button label="Log out" variant="danger" onClick={handleSignOut} loading={signingOut} disabled={busy} />
+          <Button
+            label="Delete account"
+            variant="ghost"
+            onClick={handleDeleteAccount}
+            loading={deleting}
+            disabled={busy}
+          />
+        </div>
       </div>
     </ScreenContainer>
   );

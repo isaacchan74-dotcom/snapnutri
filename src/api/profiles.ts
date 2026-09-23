@@ -50,6 +50,11 @@ export async function saveProfile({
   return data as ProfileRow;
 }
 
+export async function deleteProfile(userId: string): Promise<void> {
+  const { error } = await supabase.from(TABLE).delete().eq('id', userId);
+  if (error) throw new Error(error.message);
+}
+
 /**
  * Shared write path for onboarding and Edit Profile.
  * Recalculates BMR → TDEE → calories → macros, then upserts the profiles row.

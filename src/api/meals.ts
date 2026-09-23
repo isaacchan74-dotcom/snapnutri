@@ -77,3 +77,8 @@ export async function deleteMeal(id: string): Promise<void> {
   const { error } = await supabase.from(TABLE).delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
+
+export async function deleteMealsForUser(userId: string): Promise<void> {
+  const { error } = await supabase.from(TABLE).delete().eq('user_id', userId);
+  if (error) throw new Error(error.message);
+}

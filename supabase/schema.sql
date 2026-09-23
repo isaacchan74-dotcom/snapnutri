@@ -39,6 +39,11 @@ create policy "Users can update their own profile"
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
+drop policy if exists "Users can delete their own profile" on public.profiles;
+create policy "Users can delete their own profile"
+  on public.profiles for delete
+  using (auth.uid() = id);
+
 -- Seed an empty profile row the moment someone signs up, so onboarding
 -- always has a row to fill in.
 create or replace function public.handle_new_user()
