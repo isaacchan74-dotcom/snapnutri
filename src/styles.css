@@ -892,7 +892,6 @@ img {
 .diorama {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
   border-radius: var(--radius-xl);
   overflow: hidden;
   border: var(--border-thick) solid var(--color-border);
@@ -906,28 +905,28 @@ img {
 
 .diorama__art {
   image-rendering: pixelated;
+  image-rendering: -webkit-optimize-contrast;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
   -ms-interpolation-mode: nearest-neighbor;
 }
 
 .diorama__backdrop {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
 }
 
 .diorama__pet {
   position: absolute;
   left: 50%;
-  bottom: 6%;
-  width: 44%;
+  bottom: 8%;
+  width: 36%;
   height: auto;
   object-fit: contain;
   transform: translateX(-50%);
-  animation: buddy-bob calc(var(--duration-slow) * 2) ease-in-out infinite alternate;
 }
 
 .diorama--preview .diorama__pet,
@@ -970,11 +969,6 @@ img {
 }
 
 .pick-tile__art--wide {
-  object-fit: cover;
+  object-fit: contain;
   border-radius: var(--radius-sm);
-}
-
-@keyframes buddy-bob {
-  from { transform: translateX(-50%) translateY(0); }
-  to { transform: translateX(-50%) translateY(calc(var(--space-sm) * -1)); }
 }
