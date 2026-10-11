@@ -1,19 +1,57 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { saveCharacter } from '../../api/characters';
-import { CharacterSprite } from '../../components/CharacterSprite';
-import { AppText, Banner, Card, ScreenContainer } from '../../components';
-import { BACKGROUNDS, CREATURES, HATS, OUTFITS } from '../../constants/characterOptions';
+import { CharacterPortrait } from '../../components/CharacterPortrait';
+import {
+  AppText,
+  Banner,
+  Card,
+  InfoRow,
+  ScreenContainer,
+  TargetProgress,
+} from '../../components';
+import { BACKGROUNDS, CREATURES } from '../../constants/characterOptions';
+import { backdropArtSrc, characterArtSrc } from '../../lib/characterArt';
+import { lastLocalDays, localDayKey } from '../../lib/dates';
+import { derivePetStatus, loggingStreak, STATUS_COPY } from '../../lib/petStatus';
 import { useAuthStore } from '../../store/authStore';
-import type { BackgroundOption, CharacterType, HatOption, OutfitOption } from '../../types/character';
+import { useMealStore } from '../../store/mealStore';
+import { addMealToTotals, emptyTotals } from '../../types/meal';
+import type { BackgroundOption, CharacterType } from '../../types/character';
 
 export function CharacterScreen() {
   const user = useAuthStore((state) => state.user);
+  const profile = useAuthStore((state) => state.profile);
   const character = useAuthStore((state) => state.character);
   const characterUnavailable = useAuthStore((state) => state.characterUnavailable);
   const setCharacter = useAuthStore((state) => state.setCharacter);
+  const meals = useMealStore((state) => state.meals);
+  const loadMeals = useMealStore((state) => state.load);
+  const mealError = useMealStore((state) => state.error);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) void loadMeals(user.id);
+  }, [loadMeals, user?.id]);
+
+  const todayKey = localDayKey(new Date());
+  const todayMeals = useMemo(
+    () => meals.filter((meal) => localDayKey(new Date(meal.logged_at)) === todayKey),
+    [meals, todayKey],
+  );
+  const todayTotals = useMemo(
+    () => todayMeals.reduce(addMealToTotals, emptyTotals()),
+    [todayMeals],
+  );
+  const weekMealCount = useMemo(() => {
+    const keys = new Set(lastLocalDays(7).map((day) => localDayKey(day)));
+    return meals.filter((meal) => keys.has(localDayKey(new Date(meal.logged_at)))).length;
+  }, [meals]);
+
+  const status = derivePetStatus(meals, profile?.daily_calorie_target ?? null);
+  const streak = loggingStreak(meals);
+  const statusCopy = STATUS_COPY[status];
 
   if (characterUnavailable) {
     return (
@@ -33,8 +71,6 @@ export function CharacterScreen() {
 
   const persist = async (patch: {
     character_type?: CharacterType;
-    equipped_hat?: HatOption;
-    equipped_outfit?: OutfitOption;
     equipped_background?: BackgroundOption;
   }) => {
     if (!user) return;
@@ -43,8 +79,6 @@ export function CharacterScreen() {
     try {
       const next = await saveCharacter(user.id, {
         character_type: patch.character_type ?? character.character_type,
-        equipped_hat: patch.equipped_hat ?? character.equipped_hat,
-        equipped_outfit: patch.equipped_outfit ?? character.equipped_outfit,
         equipped_background: patch.equipped_background ?? character.equipped_background,
       });
       setCharacter(next);
@@ -58,58 +92,50 @@ export function CharacterScreen() {
   return (
     <ScreenContainer
       eyebrow="Buddy"
-      title={`${labelFor(character.character_type)} is locked in`}
-      subtitle="Hats, fits, backdrops. Styled placeholders now — real art later."
+      title={`${labelFor(character.character_type)} · ${statusCopy.label}`}
+      subtitle={statusCopy.blurb}
     >
       <div className="stack">
         {error ? <Banner message={error} /> : null}
+        {mealError ? <Banner message={mealError} /> : null}
 
-        <CharacterSprite
-          type={character.character_type}
-          hat={character.equipped_hat}
-          outfit={character.equipped_outfit}
+        <CharacterPortrait
+          animalType={character.character_type}
+          status={status}
           background={character.equipped_background}
         />
 
         <div className="stack stack--md">
           <AppText as="h2" variant="heading">
-            Creature
+            Animal
           </AppText>
           <Card>
-            <ChipRow
-              disabled={saving}
-              options={CREATURES.map((item) => ({ value: item.value, label: item.label }))}
-              selected={character.character_type}
-              onSelect={(value) => void persist({ character_type: value })}
-            />
-          </Card>
-        </div>
-
-        <div className="stack stack--md">
-          <AppText as="h2" variant="heading">
-            Hat
-          </AppText>
-          <Card>
-            <ChipRow
-              disabled={saving}
-              options={HATS}
-              selected={character.equipped_hat}
-              onSelect={(value) => void persist({ equipped_hat: value })}
-            />
-          </Card>
-        </div>
-
-        <div className="stack stack--md">
-          <AppText as="h2" variant="heading">
-            Outfit
-          </AppText>
-          <Card>
-            <ChipRow
-              disabled={saving}
-              options={OUTFITS}
-              selected={character.equipped_outfit}
-              onSelect={(value) => void persist({ equipped_outfit: value })}
-            />
+            <div className="pick-grid" role="radiogroup" aria-label="Animal">
+              {CREATURES.map((creature) => {
+                const selected = creature.value === character.character_type;
+                return (
+                  <button
+                    key={creature.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    className={selected ? 'pick-tile pick-tile--selected' : 'pick-tile'}
+                    disabled={saving}
+                    onClick={() => void persist({ character_type: creature.value })}
+                  >
+                    <img
+                      className="diorama__art pick-tile__art"
+                      src={characterArtSrc(creature.value, 'healthy')}
+                      alt=""
+                      draggable={false}
+                    />
+                    <AppText as="span" variant="caption">
+                      {creature.label}
+                    </AppText>
+                  </button>
+                );
+              })}
+            </div>
           </Card>
         </div>
 
@@ -118,12 +144,88 @@ export function CharacterScreen() {
             Backdrop
           </AppText>
           <Card>
-            <ChipRow
-              disabled={saving}
-              options={BACKGROUNDS}
-              selected={character.equipped_background}
-              onSelect={(value) => void persist({ equipped_background: value })}
-            />
+            <div className="pick-grid" role="radiogroup" aria-label="Backdrop">
+              {BACKGROUNDS.map((backdrop) => {
+                const selected = backdrop.value === character.equipped_background;
+                return (
+                  <button
+                    key={backdrop.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    className={selected ? 'pick-tile pick-tile--selected' : 'pick-tile'}
+                    disabled={saving}
+                    onClick={() => void persist({ equipped_background: backdrop.value })}
+                  >
+                    <img
+                      className="diorama__art pick-tile__art pick-tile__art--wide"
+                      src={backdropArtSrc(backdrop.value)}
+                      alt=""
+                      draggable={false}
+                    />
+                    <AppText as="span" variant="caption">
+                      {backdrop.label}
+                    </AppText>
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
+
+        <div className="stack stack--md">
+          <AppText as="h2" variant="heading">
+            Buddy stats
+          </AppText>
+          <Card tone="brand">
+            <div className="metric-block">
+              <AppText variant="label" color="secondary">
+                Logging streak
+              </AppText>
+              <AppText variant="metric" color="brand">
+                {streak}
+              </AppText>
+              <AppText variant="caption" color="secondary">
+                {streak === 1 ? 'day in a row' : 'days in a row'}
+              </AppText>
+            </div>
+          </Card>
+          <Card>
+            <InfoRow label="Pet status" value={statusCopy.label} />
+            <InfoRow label="Meals today" value={String(todayMeals.length)} />
+            <InfoRow label="Meals this week" value={String(weekMealCount)} last />
+          </Card>
+          <Card>
+            <div className="stack stack--md">
+              <TargetProgress
+                label="Calories"
+                current={todayTotals.calories}
+                target={profile?.daily_calorie_target ?? null}
+                unit="kcal"
+                colorVar="--color-primary"
+              />
+              <TargetProgress
+                label="Protein"
+                current={todayTotals.protein}
+                target={profile?.daily_protein_target ?? null}
+                unit="g"
+                colorVar="--color-protein"
+              />
+              <TargetProgress
+                label="Carbs"
+                current={todayTotals.carbs}
+                target={profile?.daily_carb_target ?? null}
+                unit="g"
+                colorVar="--color-carbs"
+              />
+              <TargetProgress
+                label="Fat"
+                current={todayTotals.fat}
+                target={profile?.daily_fat_target ?? null}
+                unit="g"
+                colorVar="--color-fat"
+              />
+            </div>
           </Card>
         </div>
       </div>
@@ -133,37 +235,4 @@ export function CharacterScreen() {
 
 function labelFor(type: CharacterType): string {
   return CREATURES.find((item) => item.value === type)?.label ?? 'Buddy';
-}
-
-function ChipRow<T extends string>({
-  options,
-  selected,
-  onSelect,
-  disabled,
-}: {
-  options: { value: T; label: string }[];
-  selected: T;
-  onSelect: (value: T) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="chip-row" role="radiogroup">
-      {options.map((option) => {
-        const active = option.value === selected;
-        return (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            className={active ? 'chip chip--selected' : 'chip'}
-            disabled={disabled}
-            onClick={() => onSelect(option.value)}
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
-  );
 }

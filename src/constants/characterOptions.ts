@@ -1,31 +1,17 @@
-import type { BackgroundOption, CharacterType, HatOption, OutfitOption } from '../types/character';
+import type { BackgroundOption, CharacterType } from '../types/character';
 
 export const CREATURES: {
   value: CharacterType;
   label: string;
   blurb: string;
 }[] = [
-  { value: 'sprout', label: 'Sprout', blurb: 'Plant-powered. Judges your fiber, kindly.' },
-  { value: 'spark', label: 'Spark', blurb: 'A snack-sized lightning bolt with opinions.' },
-  { value: 'nibble', label: 'Nibble', blurb: 'Here for the crumbs and the encore.' },
-];
-
-export const HATS: { value: HatOption; label: string }[] = [
-  { value: 'none', label: 'No hat' },
-  { value: 'beanie', label: 'Beanie' },
-  { value: 'crown', label: 'Crown' },
-  { value: 'visor', label: 'Visor' },
-];
-
-export const OUTFITS: { value: OutfitOption; label: string }[] = [
-  { value: 'none', label: 'Classic' },
-  { value: 'hoodie', label: 'Hoodie' },
-  { value: 'cape', label: 'Cape' },
-  { value: 'jersey', label: 'Jersey' },
+  { value: 'pika', label: 'Pika', blurb: 'Small, snack-motivated, and unreasonably charming.' },
+  { value: 'redpanda', label: 'Red Panda', blurb: 'Here for the leaf, the nap, and the encore.' },
+  { value: 'axolotl', label: 'Axolotl', blurb: 'Perpetually smiling. Secretly tracking your protein.' },
 ];
 
 export const BACKGROUNDS: { value: BackgroundOption; label: string }[] = [
-  { value: 'studio', label: 'Studio' },
-  { value: 'stage', label: 'Stage' },
-  { value: 'garden', label: 'Garden' },
+  { value: 'blossom', label: 'Blossom' },
+  { value: 'meadow', label: 'Meadow' },
+  { value: 'bluebell', label: 'Bluebell' },
 ];

@@ -1,18 +1,49 @@
--- SnapNutri — character / pet table
--- Paste this in the Supabase SQL editor (Dashboard → SQL Editor → New query).
+-- SnapNutri — characters table (animal + backdrop only)
+-- Paste this in the Supabase SQL editor. Safe to re-run.
 
 create table if not exists public.characters (
   user_id uuid primary key references auth.users (id) on delete cascade,
-  character_type text not null check (character_type in ('sprout', 'spark', 'nibble')),
-  equipped_hat text not null default 'none'
-    check (equipped_hat in ('none', 'beanie', 'crown', 'visor')),
-  equipped_outfit text not null default 'none'
-    check (equipped_outfit in ('none', 'hoodie', 'cape', 'jersey')),
-  equipped_background text not null default 'studio'
-    check (equipped_background in ('studio', 'stage', 'garden')),
+  character_type text not null default 'pika',
+  equipped_background text not null default 'blossom',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.characters drop column if exists equipped_hat;
+alter table public.characters drop column if exists equipped_outfit;
+alter table public.characters alter column character_type set default 'pika';
+alter table public.characters alter column equipped_background set default 'blossom';
+
+alter table public.characters drop constraint if exists characters_character_type_check;
+alter table public.characters drop constraint if exists characters_equipped_hat_check;
+alter table public.characters drop constraint if exists characters_equipped_outfit_check;
+alter table public.characters drop constraint if exists characters_equipped_background_check;
+
+update public.characters
+set character_type = case character_type
+  when 'sprout' then 'pika'
+  when 'nibble' then 'redpanda'
+  when 'spark' then 'axolotl'
+  else character_type
+end
+where character_type in ('sprout', 'spark', 'nibble');
+
+update public.characters
+set equipped_background = case equipped_background
+  when 'studio' then 'blossom'
+  when 'stage' then 'meadow'
+  when 'garden' then 'bluebell'
+  else equipped_background
+end
+where equipped_background in ('studio', 'stage', 'garden');
+
+alter table public.characters
+  add constraint characters_character_type_check
+  check (character_type in ('pika', 'redpanda', 'axolotl'));
+
+alter table public.characters
+  add constraint characters_equipped_background_check
+  check (equipped_background in ('blossom', 'meadow', 'bluebell'));
 
 alter table public.characters enable row level security;
 

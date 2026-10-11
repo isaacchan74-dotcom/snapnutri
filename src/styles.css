@@ -889,40 +889,92 @@ img {
   color: var(--color-text-on-primary);
 }
 
-.character-stage {
-  width: 100%;
-  height: var(--layout-character-stage);
-  border-radius: var(--radius-xl);
-  display: grid;
-  place-items: center;
-  overflow: hidden;
+.diorama {
   position: relative;
-}
-
-.character-stage--studio {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: var(--border-thick) solid var(--color-border);
   background: var(--color-surface-muted);
 }
 
-.character-stage--stage {
-  background-image: var(--color-hero-gradient);
+.diorama--compact,
+.diorama--preview {
+  aspect-ratio: 1;
 }
 
-.character-stage--garden {
-  background: var(--color-block-accent);
+.diorama__art {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
 }
 
-.character-stage--compact {
-  height: calc(var(--layout-character-stage) * 0.62);
+.diorama__backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.character-sprite {
-  width: 68%;
-  max-width: calc(var(--layout-character-stage) - var(--space-xxl));
+.diorama__pet {
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  width: 44%;
   height: auto;
+  object-fit: contain;
+  transform: translateX(-50%);
   animation: buddy-bob calc(var(--duration-slow) * 2) ease-in-out infinite alternate;
 }
 
+.diorama--preview .diorama__pet,
+.diorama--compact .diorama__pet {
+  width: 72%;
+  bottom: 8%;
+}
+
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.pick-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  border: var(--border-thick) solid var(--color-border);
+  background: var(--color-surface-muted);
+}
+
+.pick-tile--selected {
+  border-color: transparent;
+  background: var(--color-block-accent);
+  color: var(--color-text-on-accent);
+}
+
+.pick-tile--selected .text {
+  color: var(--color-text-on-accent);
+}
+
+.pick-tile__art {
+  width: 100%;
+  height: calc(var(--layout-avatar-size) + var(--space-lg));
+  object-fit: contain;
+}
+
+.pick-tile__art--wide {
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
 @keyframes buddy-bob {
-  from { transform: translateY(0); }
-  to { transform: translateY(calc(var(--space-sm) * -1)); }
+  from { transform: translateX(-50%) translateY(0); }
+  to { transform: translateX(-50%) translateY(calc(var(--space-sm) * -1)); }
 }

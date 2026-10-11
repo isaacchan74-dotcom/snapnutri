@@ -104,16 +104,14 @@ create policy "Users can delete their own meals"
   on public.meals for delete
   using (auth.uid() = user_id);
 
--- Characters / pets. Safe to re-run.
+-- Characters / pets. Safe to re-run. Existing projects should use supabase/characters.sql
+-- to drop hats/outfits and migrate old creature names.
 create table if not exists public.characters (
   user_id uuid primary key references auth.users (id) on delete cascade,
-  character_type text not null check (character_type in ('sprout', 'spark', 'nibble')),
-  equipped_hat text not null default 'none'
-    check (equipped_hat in ('none', 'beanie', 'crown', 'visor')),
-  equipped_outfit text not null default 'none'
-    check (equipped_outfit in ('none', 'hoodie', 'cape', 'jersey')),
-  equipped_background text not null default 'studio'
-    check (equipped_background in ('studio', 'stage', 'garden')),
+  character_type text not null default 'pika'
+    check (character_type in ('pika', 'redpanda', 'axolotl')),
+  equipped_background text not null default 'blossom'
+    check (equipped_background in ('blossom', 'meadow', 'bluebell')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

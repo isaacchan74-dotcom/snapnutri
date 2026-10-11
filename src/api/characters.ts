@@ -1,15 +1,22 @@
 import { supabase } from '../lib/supabase';
-import type { CharacterInput, CharacterRow } from '../types/character';
+import {
+  isBackgroundOption,
+  isCharacterType,
+  type CharacterInput,
+  type CharacterRow,
+} from '../types/character';
 
 const TABLE = 'characters';
 
-function toCharacter(row: Record<string, unknown>): CharacterRow {
+function toCharacter(row: Record<string, unknown>): CharacterRow | null {
+  if (!isCharacterType(row.character_type)) return null;
+
   return {
     user_id: String(row.user_id),
-    character_type: row.character_type as CharacterRow['character_type'],
-    equipped_hat: (row.equipped_hat as CharacterRow['equipped_hat']) ?? 'none',
-    equipped_outfit: (row.equipped_outfit as CharacterRow['equipped_outfit']) ?? 'none',
-    equipped_background: (row.equipped_background as CharacterRow['equipped_background']) ?? 'studio',
+    character_type: row.character_type,
+    equipped_background: isBackgroundOption(row.equipped_background)
+      ? row.equipped_background
+      : 'blossom',
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   };
@@ -44,8 +51,6 @@ export async function saveCharacter(userId: string, input: CharacterInput): Prom
       {
         user_id: userId,
         character_type: input.character_type,
-        equipped_hat: input.equipped_hat,
-        equipped_outfit: input.equipped_outfit,
         equipped_background: input.equipped_background,
         updated_at: new Date().toISOString(),
       },
@@ -55,7 +60,9 @@ export async function saveCharacter(userId: string, input: CharacterInput): Prom
     .single();
 
   if (error) throw new Error(error.message);
-  return toCharacter(data as Record<string, unknown>);
+  const next = toCharacter(data as Record<string, unknown>);
+  if (!next) throw new Error('Could not save your buddy.');
+  return next;
 }
 
 export async function deleteCharacter(userId: string): Promise<void> {

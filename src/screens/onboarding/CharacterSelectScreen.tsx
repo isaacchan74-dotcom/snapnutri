@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { saveCharacter } from '../../api/characters';
-import { CharacterSprite } from '../../components/CharacterSprite';
+import { CharacterPortrait } from '../../components/CharacterPortrait';
 import { AppText, Banner, Button, ScreenContainer } from '../../components';
 import { CREATURES } from '../../constants/characterOptions';
 import { useAuthStore } from '../../store/authStore';
@@ -26,17 +26,16 @@ export function CharacterSelectScreen() {
     try {
       const next = await saveCharacter(user.id, {
         character_type: picked,
-        equipped_hat: character?.equipped_hat ?? 'none',
-        equipped_outfit: character?.equipped_outfit ?? 'none',
-        equipped_background: character?.equipped_background ?? 'studio',
+        equipped_background: character?.equipped_background ?? 'blossom',
       });
       setCharacter(next);
       navigate('/character', { replace: true });
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : 'Could not save your buddy.';
       setError(
-        message.toLowerCase().includes('could not find the table')
-          ? 'The characters table is not in Supabase yet. Paste supabase/characters.sql into the SQL editor, then try again.'
+        message.toLowerCase().includes('could not find the table') ||
+          message.toLowerCase().includes('violates')
+          ? 'Run the latest supabase/characters.sql in the SQL editor, then try again.'
           : message,
       );
       setSaving(false);
@@ -47,7 +46,7 @@ export function CharacterSelectScreen() {
     <ScreenContainer
       eyebrow="Meet your buddy"
       title="Pick a creature"
-      subtitle="They’ll ride along for the recaps. You can restyle them anytime."
+      subtitle="Pika, Red Panda, or Axolotl. You can swap later — mood follows your food log."
       footer={
         <Button
           label="That’s the one"
@@ -73,7 +72,7 @@ export function CharacterSelectScreen() {
                 onClick={() => setPicked(creature.value)}
                 aria-pressed={selected}
               >
-                <CharacterSprite type={creature.value} compact />
+                <CharacterPortrait animalType={creature.value} status="healthy" compact />
                 <div className="stack stack--sm">
                   <AppText variant="heading">{creature.label}</AppText>
                   <AppText variant="caption" color="secondary">
