@@ -49,14 +49,18 @@ export function DashboardScreen() {
   }, [meals]);
 
   return (
-    <ScreenContainer title="Stats" subtitle="Today versus your targets, plus a quiet week view.">
+    <ScreenContainer
+      eyebrow="Your recap"
+      title="Today, unwrapped"
+      subtitle="Loud numbers. Honest macros. A week that actually looks like a poster."
+    >
       {error ? <Banner message={error} /> : null}
 
       <div className="stack">
-        <Card tone="brand">
+        <Card tone="hero">
           <div className="metric-block">
             <AppText variant="label" color="secondary">
-              Today
+              Calories today
             </AppText>
             <AppText variant="metric" color="brand">
               {formatWhole(todayTotals.calories)}

@@ -4,6 +4,7 @@ const TABS = [
   { to: '/snap', label: 'Snap', icon: CameraIcon },
   { to: '/journal', label: 'Journal', icon: BookIcon },
   { to: '/dashboard', label: 'Stats', icon: ChartIcon },
+  { to: '/character', label: 'Buddy', icon: BuddyIcon },
   { to: '/profile', label: 'Profile', icon: PersonIcon },
 ] as const;
 
@@ -67,6 +68,18 @@ function ChartIcon({ active }: { active: boolean }) {
       <path d="M8 15v-3" stroke="currentColor" strokeWidth={active ? 2.2 : 1.7} strokeLinecap="round" />
       <path d="M12 15V8" stroke="currentColor" strokeWidth={active ? 2.2 : 1.7} strokeLinecap="round" />
       <path d="M16 15v-6" stroke="currentColor" strokeWidth={active ? 2.2 : 1.7} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function BuddyIcon({ active }: { active: boolean }) {
+  return (
+    <svg className="tab-bar__icon" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="13" r="6" stroke="currentColor" strokeWidth={active ? 2.2 : 1.7} />
+      <circle cx="10" cy="12" r="1" fill="currentColor" />
+      <circle cx="14" cy="12" r="1" fill="currentColor" />
+      <path d="M10 15c1.2 1 2.8 1 4 0" stroke="currentColor" strokeWidth={active ? 2.2 : 1.7} strokeLinecap="round" />
+      <path d="M12 4v3" stroke="currentColor" strokeWidth={active ? 2.2 : 1.7} strokeLinecap="round" />
     </svg>
   );
 }

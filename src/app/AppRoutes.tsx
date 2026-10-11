@@ -6,9 +6,11 @@ import { CameraScreen } from '../screens/main/CameraScreen';
 import { DashboardScreen } from '../screens/main/DashboardScreen';
 import { JournalScreen } from '../screens/main/JournalScreen';
 import { MealFormScreen } from '../screens/main/MealFormScreen';
+import { CharacterScreen } from '../screens/main/CharacterScreen';
 import { EditProfileScreen } from '../screens/main/EditProfileScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
 import { SettingsScreen } from '../screens/main/SettingsScreen';
+import { CharacterSelectScreen } from '../screens/onboarding/CharacterSelectScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { SignUpScreen } from '../screens/auth/SignUpScreen';
 import { ActivityScreen } from '../screens/onboarding/ActivityScreen';
@@ -21,6 +23,7 @@ import { WeightScreen } from '../screens/onboarding/WeightScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { SetupRequiredScreen } from '../screens/SetupRequiredScreen';
 import { useAuthStore } from '../store/authStore';
+import { isCharacterComplete } from '../types/character';
 import { isProfileComplete } from '../types/profile';
 import { AppShell } from './AppShell';
 
@@ -51,12 +54,17 @@ export function AppRoutes() {
         <Route path="/onboarding/summary" element={<SummaryScreen />} />
       </Route>
 
+      <Route element={<CharacterRoute />}>
+        <Route path="/character/select" element={<CharacterSelectScreen />} />
+      </Route>
+
       <Route element={<AppRoute />}>
         <Route path="/snap" element={<CameraScreen />} />
         <Route path="/journal" element={<JournalScreen />} />
         <Route path="/journal/new" element={<MealFormScreen />} />
         <Route path="/journal/:mealId" element={<MealFormScreen />} />
         <Route path="/dashboard" element={<DashboardScreen />} />
+        <Route path="/character" element={<CharacterScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/profile/edit" element={<EditProfileScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />
@@ -71,6 +79,7 @@ function GuestRoute() {
   const gate = useGate();
   if (gate.kind === 'loading') return <BootScreen message={gate.message} />;
   if (gate.kind === 'onboarding') return <Navigate to="/onboarding" replace />;
+  if (gate.kind === 'character') return <Navigate to="/character/select" replace />;
   if (gate.kind === 'app') return <Navigate to="/snap" replace />;
   return (
     <AppShell>
@@ -83,7 +92,21 @@ function OnboardingRoute() {
   const gate = useGate();
   if (gate.kind === 'loading') return <BootScreen message={gate.message} />;
   if (gate.kind === 'guest') return <Navigate to="/login" replace />;
+  if (gate.kind === 'character') return <Navigate to="/character/select" replace />;
   if (gate.kind === 'app') return <Navigate to="/snap" replace />;
+  return (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  );
+}
+
+function CharacterRoute() {
+  const gate = useGate();
+  if (gate.kind === 'loading') return <BootScreen message={gate.message} />;
+  if (gate.kind === 'guest') return <Navigate to="/login" replace />;
+  if (gate.kind === 'onboarding') return <Navigate to="/onboarding" replace />;
+  if (gate.kind === 'app') return <Navigate to="/character" replace />;
   return (
     <AppShell>
       <Outlet />
@@ -96,6 +119,7 @@ function AppRoute() {
   if (gate.kind === 'loading') return <BootScreen message={gate.message} />;
   if (gate.kind === 'guest') return <Navigate to="/login" replace />;
   if (gate.kind === 'onboarding') return <Navigate to="/onboarding" replace />;
+  if (gate.kind === 'character') return <Navigate to="/character/select" replace />;
   return (
     <AppShell showTabs>
       <Outlet />
@@ -108,6 +132,7 @@ function CatchAllRedirect() {
   if (gate.kind === 'loading') return <BootScreen message={gate.message} />;
   if (gate.kind === 'guest') return <Navigate to="/login" replace />;
   if (gate.kind === 'onboarding') return <Navigate to="/onboarding" replace />;
+  if (gate.kind === 'character') return <Navigate to="/character/select" replace />;
   return <Navigate to="/snap" replace />;
 }
 
@@ -123,6 +148,7 @@ type Gate =
   | { kind: 'loading'; message: string }
   | { kind: 'guest' }
   | { kind: 'onboarding' }
+  | { kind: 'character' }
   | { kind: 'app' };
 
 function useGate(): Gate {
@@ -130,6 +156,8 @@ function useGate(): Gate {
   const session = useAuthStore((state) => state.session);
   const profile = useAuthStore((state) => state.profile);
   const profileLoading = useAuthStore((state) => state.profileLoading);
+  const character = useAuthStore((state) => state.character);
+  const characterLoading = useAuthStore((state) => state.characterLoading);
 
   if (initializing) {
     return { kind: 'loading', message: 'Warming up…' };
@@ -145,6 +173,14 @@ function useGate(): Gate {
 
   if (!isProfileComplete(profile)) {
     return { kind: 'onboarding' };
+  }
+
+  if (characterLoading && !isCharacterComplete(character)) {
+    return { kind: 'loading', message: 'Waking your buddy…' };
+  }
+
+  if (!isCharacterComplete(character)) {
+    return { kind: 'character' };
   }
 
   return { kind: 'app' };

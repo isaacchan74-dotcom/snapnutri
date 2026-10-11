@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 
-export type CardTone = 'surface' | 'muted' | 'brand' | 'accent';
+export type CardTone = 'surface' | 'muted' | 'brand' | 'accent' | 'hero';
 
 type CardProps = HTMLAttributes<HTMLDivElement> & {
   tone?: CardTone;
@@ -14,6 +14,7 @@ export function Card({ tone = 'surface', padding = 'md', className, children, ..
     tone === 'muted' ? 'card--muted' : '',
     tone === 'brand' ? 'card--brand' : '',
     tone === 'accent' ? 'card--accent' : '',
+    tone === 'hero' ? 'card--hero' : '',
     padding === 'sm' ? 'card--sm' : '',
     padding === 'lg' ? 'card--lg' : '',
     className ?? '',

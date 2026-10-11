@@ -5,12 +5,14 @@
  * Every key must exist in every palette so modes stay swappable.
  */
 
-export const THEME_MODES = ['light', 'dark', 'blue', 'sunset', 'mint'] as const;
+export const THEME_MODES = ['volt', 'heat', 'acid'] as const;
 
 export type ThemeMode = (typeof THEME_MODES)[number];
 
 export type ColorTokens = {
   background: string;
+  backgroundGradient: string;
+  heroGradient: string;
   surface: string;
   surfaceMuted: string;
   surfaceRaised: string;
@@ -22,6 +24,7 @@ export type ColorTokens = {
   textMuted: string;
   textOnPrimary: string;
   textOnAccent: string;
+  ink: string;
 
   primary: string;
   primaryPressed: string;
@@ -29,6 +32,9 @@ export type ColorTokens = {
 
   accent: string;
   accentSoft: string;
+
+  blockBrand: string;
+  blockAccent: string;
 
   success: string;
   warning: string;
@@ -50,227 +56,159 @@ export type ColorTokens = {
   skeleton: string;
 };
 
-const light: ColorTokens = {
-  background: '#F6F8FA',
-  surface: '#FFFFFF',
-  surfaceMuted: '#EDF1F5',
-  surfaceRaised: '#FFFFFF',
-  border: '#E1E7EE',
-  borderStrong: '#C9D3DE',
+const volt: ColorTokens = {
+  background: '#16041F',
+  backgroundGradient: 'linear-gradient(165deg, #6D28D9 0%, #BE185D 54%, #16041F 100%)',
+  heroGradient: 'linear-gradient(135deg, #C026D3 0%, #FB7185 100%)',
+  surface: '#2A0A3D',
+  surfaceMuted: '#3B0F52',
+  surfaceRaised: '#4C1D95',
+  border: '#7E22CE',
+  borderStrong: '#E879F9',
 
-  textPrimary: '#141A21',
-  textSecondary: '#566073',
-  textMuted: '#909BAA',
-  textOnPrimary: '#FFFFFF',
-  textOnAccent: '#3A2200',
+  textPrimary: '#FFF5FB',
+  textSecondary: '#F9A8D4',
+  textMuted: '#E879F9',
+  textOnPrimary: '#1A0418',
+  textOnAccent: '#122000',
+  ink: '#120616',
 
-  primary: '#56C32A',
-  primaryPressed: '#47A420',
-  primarySoft: '#E7F7DE',
+  primary: '#FF2E93',
+  primaryPressed: '#DB2777',
+  primarySoft: '#4A0D36',
 
-  accent: '#FF9F1C',
-  accentSoft: '#FFF1DC',
+  accent: '#C8FF00',
+  accentSoft: '#2A3A00',
 
-  success: '#2FA96A',
-  warning: '#E8A020',
-  danger: '#E04B4B',
-  dangerSoft: '#FDE8E8',
-  info: '#3B82F6',
+  blockBrand: '#FF2E93',
+  blockAccent: '#C8FF00',
 
-  protein: '#FF6B6B',
-  carbs: '#4D96FF',
-  fat: '#FFC145',
+  success: '#C8FF00',
+  warning: '#FFB020',
+  danger: '#FF4D6D',
+  dangerSoft: '#3F1020',
+  info: '#7DD3FC',
 
-  tabBarBackground: '#FFFFFF',
-  tabBarActive: '#56C32A',
-  tabBarInactive: '#98A3B3',
-  tabBarBorder: '#E1E7EE',
+  protein: '#FF5C8A',
+  carbs: '#7DD3FC',
+  fat: '#FDE047',
 
-  overlay: 'rgba(15, 20, 26, 0.45)',
-  shadow: '#0B1220',
-  skeleton: '#E4E9EF',
+  tabBarBackground: '#12041A',
+  tabBarActive: '#C8FF00',
+  tabBarInactive: '#C084FC',
+  tabBarBorder: '#4C1D95',
+
+  overlay: 'rgba(10, 2, 16, 0.62)',
+  shadow: '#FF2E93',
+  skeleton: '#3B0F52',
 };
 
-const dark: ColorTokens = {
-  background: '#0E1318',
-  surface: '#171E25',
-  surfaceMuted: '#212A33',
-  surfaceRaised: '#1B232B',
-  border: '#2A343E',
-  borderStrong: '#3A4753',
+const heat: ColorTokens = {
+  background: '#1A0A08',
+  backgroundGradient: 'linear-gradient(165deg, #EA580C 0%, #DB2777 56%, #1A0A08 100%)',
+  heroGradient: 'linear-gradient(135deg, #F97316 0%, #EC4899 100%)',
+  surface: '#3B120C',
+  surfaceMuted: '#4C1D12',
+  surfaceRaised: '#7C2D12',
+  border: '#C2410C',
+  borderStrong: '#FB923C',
 
-  textPrimary: '#F1F5F9',
-  textSecondary: '#A7B3C1',
-  textMuted: '#6F7D8C',
-  textOnPrimary: '#08150B',
-  textOnAccent: '#2A1A00',
+  textPrimary: '#FFF7ED',
+  textSecondary: '#FDBA74',
+  textMuted: '#FB7185',
+  textOnPrimary: '#1A0A00',
+  textOnAccent: '#1A0410',
+  ink: '#1A0A08',
 
-  primary: '#63D633',
-  primaryPressed: '#52B928',
-  primarySoft: '#1B2F14',
+  primary: '#FF6B1A',
+  primaryPressed: '#C2410C',
+  primarySoft: '#4A1608',
 
-  accent: '#FFB454',
-  accentSoft: '#3A2A12',
+  accent: '#FF2E93',
+  accentSoft: '#3F1024',
 
-  success: '#3FC486',
-  warning: '#F3B13C',
-  danger: '#F06A6A',
-  dangerSoft: '#3A1D1D',
-  info: '#5C9DFF',
+  blockBrand: '#FF6B1A',
+  blockAccent: '#FF2E93',
 
-  protein: '#FF8585',
-  carbs: '#6FAAFF',
-  fat: '#FFD066',
+  success: '#C8FF00',
+  warning: '#FBBF24',
+  danger: '#FF4D6D',
+  dangerSoft: '#3F1410',
+  info: '#38BDF8',
 
-  tabBarBackground: '#151C23',
-  tabBarActive: '#63D633',
-  tabBarInactive: '#6F7D8C',
-  tabBarBorder: '#242E38',
+  protein: '#FB7185',
+  carbs: '#38BDF8',
+  fat: '#FACC15',
 
-  overlay: 'rgba(0, 0, 0, 0.6)',
-  shadow: '#000000',
-  skeleton: '#232D37',
+  tabBarBackground: '#140806',
+  tabBarActive: '#FF6B1A',
+  tabBarInactive: '#F9A8D4',
+  tabBarBorder: '#7C2D12',
+
+  overlay: 'rgba(16, 6, 4, 0.62)',
+  shadow: '#FF6B1A',
+  skeleton: '#4C1D12',
 };
 
-const blue: ColorTokens = {
-  background: '#081C33',
-  surface: '#0F2A49',
-  surfaceMuted: '#163657',
-  surfaceRaised: '#123050',
-  border: '#1E4571',
-  borderStrong: '#2C5C8F',
+const acid: ColorTokens = {
+  background: '#081208',
+  backgroundGradient: 'linear-gradient(165deg, #3F6212 0%, #14532D 42%, #1E1B4B 100%)',
+  heroGradient: 'linear-gradient(135deg, #A3E635 0%, #22C55E 55%, #7C3AED 100%)',
+  surface: '#122016',
+  surfaceMuted: '#1A2E1C',
+  surfaceRaised: '#365314',
+  border: '#4D7C0F',
+  borderStrong: '#A3E635',
 
-  textPrimary: '#EAF3FF',
-  textSecondary: '#A6C3E4',
-  textMuted: '#6F92BB',
-  textOnPrimary: '#04203C',
-  textOnAccent: '#20180A',
+  textPrimary: '#F7FFE8',
+  textSecondary: '#D9F99D',
+  textMuted: '#A3E635',
+  textOnPrimary: '#122000',
+  textOnAccent: '#F5F3FF',
+  ink: '#081208',
 
-  primary: '#31A0FF',
-  primaryPressed: '#2183DA',
-  primarySoft: '#123B61',
+  primary: '#C8FF00',
+  primaryPressed: '#84CC16',
+  primarySoft: '#1F3308',
 
-  accent: '#FFD166',
-  accentSoft: '#3B3218',
+  accent: '#A855F7',
+  accentSoft: '#2E1064',
 
-  success: '#3FD49B',
-  warning: '#FFC552',
-  danger: '#FF7A7A',
-  dangerSoft: '#3D1F2B',
-  info: '#7BB8FF',
+  blockBrand: '#C8FF00',
+  blockAccent: '#A855F7',
 
-  protein: '#FF8FA3',
-  carbs: '#5FC8FF',
-  fat: '#FFD98A',
+  success: '#86EFAC',
+  warning: '#FBBF24',
+  danger: '#FF4D6D',
+  dangerSoft: '#2A1610',
+  info: '#22D3EE',
 
-  tabBarBackground: '#0C2543',
-  tabBarActive: '#31A0FF',
-  tabBarInactive: '#6F92BB',
-  tabBarBorder: '#1A3E66',
+  protein: '#FB7185',
+  carbs: '#22D3EE',
+  fat: '#FDE047',
 
-  overlay: 'rgba(3, 14, 26, 0.65)',
-  shadow: '#02101F',
-  skeleton: '#16375A',
+  tabBarBackground: '#06100A',
+  tabBarActive: '#C8FF00',
+  tabBarInactive: '#A3E635',
+  tabBarBorder: '#365314',
+
+  overlay: 'rgba(4, 10, 6, 0.62)',
+  shadow: '#C8FF00',
+  skeleton: '#1A2E1C',
 };
 
-const sunset: ColorTokens = {
-  background: '#FFF4EB',
-  surface: '#FFFFFF',
-  surfaceMuted: '#F8E6D6',
-  surfaceRaised: '#FFFFFF',
-  border: '#F0D2B8',
-  borderStrong: '#E0B894',
-
-  textPrimary: '#3A2415',
-  textSecondary: '#8A5A3A',
-  textMuted: '#B08968',
-  textOnPrimary: '#FFF8F1',
-  textOnAccent: '#3A2200',
-
-  primary: '#E85D04',
-  primaryPressed: '#C44B00',
-  primarySoft: '#FFE4CC',
-
-  accent: '#F4A261',
-  accentSoft: '#FFF0D6',
-
-  success: '#2FA96A',
-  warning: '#E8A020',
-  danger: '#D94841',
-  dangerSoft: '#FDE8E4',
-  info: '#3B82F6',
-
-  protein: '#E76F51',
-  carbs: '#2A9D8F',
-  fat: '#E9C46A',
-
-  tabBarBackground: '#FFFFFF',
-  tabBarActive: '#E85D04',
-  tabBarInactive: '#B08968',
-  tabBarBorder: '#F0D2B8',
-
-  overlay: 'rgba(58, 36, 21, 0.45)',
-  shadow: '#3A2415',
-  skeleton: '#F3DDCA',
-};
-
-const mint: ColorTokens = {
-  background: '#F3FAF7',
-  surface: '#FFFFFF',
-  surfaceMuted: '#E4F3EC',
-  surfaceRaised: '#FFFFFF',
-  border: '#C9E6D8',
-  borderStrong: '#A3D4BE',
-
-  textPrimary: '#12352C',
-  textSecondary: '#4A7A6A',
-  textMuted: '#7AA394',
-  textOnPrimary: '#F4FFFB',
-  textOnAccent: '#12352C',
-
-  primary: '#0F9F7B',
-  primaryPressed: '#0C8264',
-  primarySoft: '#D7F5EA',
-
-  accent: '#14B8A6',
-  accentSoft: '#E3FFF3',
-
-  success: '#2FA96A',
-  warning: '#E8A020',
-  danger: '#E04B4B',
-  dangerSoft: '#FDE8E8',
-  info: '#2A9D8F',
-
-  protein: '#FF6B6B',
-  carbs: '#2A9D8F',
-  fat: '#E9C46A',
-
-  tabBarBackground: '#FFFFFF',
-  tabBarActive: '#0F9F7B',
-  tabBarInactive: '#7AA394',
-  tabBarBorder: '#C9E6D8',
-
-  overlay: 'rgba(18, 53, 44, 0.4)',
-  shadow: '#12352C',
-  skeleton: '#DCEEE6',
-};
-
-export const palettes: Record<ThemeMode, ColorTokens> = { light, dark, blue, sunset, mint };
+export const palettes: Record<ThemeMode, ColorTokens> = { volt, heat, acid };
 
 export const modeAppearance: Record<ThemeMode, 'light' | 'dark'> = {
-  light: 'light',
-  dark: 'dark',
-  blue: 'dark',
-  sunset: 'light',
-  mint: 'light',
+  volt: 'dark',
+  heat: 'dark',
+  acid: 'dark',
 };
 
 export const modeLabels: Record<ThemeMode, { label: string; emoji: string }> = {
-  light: { label: 'Light', emoji: '☀️' },
-  dark: { label: 'Dark', emoji: '🌙' },
-  blue: { label: 'Blue', emoji: '🌊' },
-  sunset: { label: 'Sunset', emoji: '🌅' },
-  mint: { label: 'Mint', emoji: '🌿' },
+  volt: { label: 'Volt', emoji: '⚡' },
+  heat: { label: 'Heat', emoji: '🔥' },
+  acid: { label: 'Acid', emoji: '🍋' },
 };
 
 export function isThemeMode(value: unknown): value is ThemeMode {

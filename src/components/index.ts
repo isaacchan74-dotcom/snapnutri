@@ -2,6 +2,7 @@ export { AppText, type TextColor, type TypographyVariant } from './AppText';
 export { Banner } from './Banner';
 export { Button, type ButtonSize, type ButtonVariant } from './Button';
 export { Card, type CardTone } from './Card';
+export { CharacterSprite } from './CharacterSprite';
 export { EmptyState } from './EmptyState';
 export { GearIcon, IconButton } from './IconButton';
 export { InfoRow } from './InfoRow';

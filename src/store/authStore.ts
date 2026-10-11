@@ -1,9 +1,11 @@
 import type { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 
+import { loadCharacter } from '../api/characters';
 import { fetchProfile } from '../api/profiles';
 import { isSupabaseConfigured } from '../lib/env';
 import { supabase } from '../lib/supabase';
+import type { CharacterRow } from '../types/character';
 import type { ProfileRow } from '../types/profile';
 import { useMealStore } from './mealStore';
 
@@ -16,10 +18,14 @@ type AuthState = {
   user: User | null;
   profile: ProfileRow | null;
   profileLoading: boolean;
+  character: CharacterRow | null;
+  characterLoading: boolean;
+  characterUnavailable: boolean;
 
   initialize: () => () => void;
   refreshProfile: () => Promise<void>;
   setProfile: (profile: ProfileRow) => void;
+  setCharacter: (character: CharacterRow) => void;
   signUp: (email: string, password: string) => Promise<SignUpResult>;
   signIn: (email: string, password: string) => Promise<ActionResult>;
   signOut: () => Promise<ActionResult>;
@@ -36,6 +42,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
   profileLoading: false,
+  character: null,
+  characterLoading: false,
+  characterUnavailable: false,
 
   initialize: () => {
     if (!isSupabaseConfigured) {
@@ -47,17 +56,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ session, user: session?.user ?? null });
 
       if (!session?.user) {
-        set({ profile: null, profileLoading: false, initializing: false });
+        set({
+          profile: null,
+          profileLoading: false,
+          character: null,
+          characterLoading: false,
+          characterUnavailable: false,
+          initializing: false,
+        });
         return;
       }
 
-      set({ profileLoading: true });
+      set({ profileLoading: true, characterLoading: true });
       try {
-        set({ profile: await fetchProfile(session.user.id) });
+        const [profile, characterResult] = await Promise.all([
+          fetchProfile(session.user.id),
+          loadCharacter(session.user.id).catch(() => ({ character: null, unavailable: true })),
+        ]);
+        set({
+          profile,
+          character: characterResult.character,
+          characterUnavailable: characterResult.unavailable,
+        });
       } catch {
-        set({ profile: null });
+        set({ profile: null, character: null, characterUnavailable: true });
       } finally {
-        set({ profileLoading: false, initializing: false });
+        set({ profileLoading: false, characterLoading: false, initializing: false });
       }
     };
 
@@ -93,6 +117,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   setProfile: (profile) => set({ profile }),
+  setCharacter: (character) => set({ character, characterUnavailable: false }),
 
   signUp: async (email, password) => {
     const { data, error } = await supabase.auth.signUp({
@@ -118,7 +143,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      set({ session: null, user: null, profile: null });
+      set({
+        session: null,
+        user: null,
+        profile: null,
+        character: null,
+        characterUnavailable: false,
+      });
       useMealStore.setState({ meals: [], error: null, loading: false });
       return { error: null };
     } catch (error) {

@@ -1,3 +1,4 @@
+import { deleteCharacter } from './characters';
 import { deleteMealsForUser } from './meals';
 import { deleteProfile } from './profiles';
 
@@ -13,7 +14,7 @@ function toDeleteError(error: unknown, fallback: string): Error {
 }
 
 /**
- * Removes the signed-in user's profile row and every meal they logged.
+ * Removes the signed-in user's profile, meals, and character.
  * Auth sign-out is left to the caller so the UI can confirm first.
  */
 export async function deleteAccountData(userId: string): Promise<void> {
@@ -23,6 +24,15 @@ export async function deleteAccountData(userId: string): Promise<void> {
     const message = error instanceof Error ? error.message.toLowerCase() : '';
     if (!message.includes('could not find the table')) {
       throw toDeleteError(error, 'Could not delete your meals.');
+    }
+  }
+
+  try {
+    await deleteCharacter(userId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : '';
+    if (!message.includes('could not find the table')) {
+      throw toDeleteError(error, 'Could not delete your character.');
     }
   }
 

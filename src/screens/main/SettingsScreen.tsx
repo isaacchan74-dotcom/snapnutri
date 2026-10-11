@@ -81,7 +81,7 @@ export function SettingsScreen() {
           <Card>
             <div className="stack stack--md">
               <AppText variant="caption" color="secondary">
-                Five vibes. Same layout. Your pick sticks between sessions.
+                Three high-voltage palettes. Same layout. Your pick sticks.
               </AppText>
               <ThemePicker />
             </div>

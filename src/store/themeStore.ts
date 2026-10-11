@@ -11,7 +11,7 @@ type ThemeState = {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      mode: 'light',
+      mode: 'volt',
       setMode: (mode) => set({ mode }),
     }),
     {

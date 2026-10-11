@@ -20,11 +20,11 @@ export const spacing = {
 
 export const radius = {
   none: 0,
-  xs: 6,
-  sm: 10,
-  md: 14,
-  lg: 20,
-  xl: 28,
+  xs: 8,
+  sm: 12,
+  md: 18,
+  lg: 26,
+  xl: 36,
   pill: 999,
 } as const;
 
@@ -34,10 +34,10 @@ export const fontSize = {
   sm: 14,
   md: 16,
   lg: 18,
-  xl: 22,
-  xxl: 28,
-  xxxl: 34,
-  display: 42,
+  xl: 24,
+  xxl: 34,
+  xxxl: 48,
+  display: 56,
 } as const;
 
 export const fontWeight = {
@@ -86,7 +86,8 @@ export const duration = {
 } as const;
 
 export const fontFamily = {
-  sans: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  sans: '"Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
+  headline: '"Archivo Black", "Outfit", ui-sans-serif, sans-serif',
 } as const;
 
 export const layout = {
@@ -100,29 +101,30 @@ export const layout = {
   buttonSm: 40,
   buttonMd: 52,
   buttonLg: 58,
-  progressBarHeight: 10,
+  progressBarHeight: 14,
   avatarSize: 72,
-  chartHeight: 200,
+  chartHeight: 220,
+  characterStage: 260,
 } as const;
 
 export const typography = {
   display: {
     fontSize: fontSize.display,
-    lineHeight: fontSize.display * 1.12,
+    lineHeight: fontSize.display * 1.02,
     fontWeight: fontWeight.heavy,
     letterSpacing: letterSpacing.tight,
   },
   title: {
     fontSize: fontSize.xxl,
-    lineHeight: fontSize.xxl * 1.2,
-    fontWeight: fontWeight.bold,
+    lineHeight: fontSize.xxl * 1.05,
+    fontWeight: fontWeight.heavy,
     letterSpacing: letterSpacing.tight,
   },
   heading: {
     fontSize: fontSize.xl,
-    lineHeight: fontSize.xl * 1.25,
-    fontWeight: fontWeight.bold,
-    letterSpacing: letterSpacing.normal,
+    lineHeight: fontSize.xl * 1.1,
+    fontWeight: fontWeight.heavy,
+    letterSpacing: letterSpacing.tight,
   },
   subtitle: {
     fontSize: fontSize.lg,
@@ -156,7 +158,7 @@ export const typography = {
   },
   metric: {
     fontSize: fontSize.xxxl,
-    lineHeight: fontSize.xxxl * 1.1,
+    lineHeight: fontSize.xxxl * 0.95,
     fontWeight: fontWeight.heavy,
     letterSpacing: letterSpacing.tight,
   },

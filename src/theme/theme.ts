@@ -21,15 +21,12 @@ export type ShadowTokens = {
   raised: string;
 };
 
-function createShadows(colors: ColorTokens, mode: ThemeMode): ShadowTokens {
-  const isLight = modeAppearance[mode] === 'light';
-  const alpha = isLight ? 0.08 : 0.35;
-
+function createShadows(colors: ColorTokens): ShadowTokens {
   return {
     none: 'none',
-    soft: `0 2px 6px ${hexToRgba(colors.shadow, alpha * 0.6)}`,
-    card: `0 4px 12px ${hexToRgba(colors.shadow, alpha)}`,
-    raised: `0 8px 20px ${hexToRgba(colors.shadow, alpha * 1.3)}`,
+    soft: `0 0 18px ${hexToRgba(colors.shadow, 0.28)}`,
+    card: `0 10px 28px ${hexToRgba(colors.shadow, 0.22)}`,
+    raised: `0 16px 40px ${hexToRgba(colors.shadow, 0.32)}`,
   };
 }
 
@@ -68,7 +65,7 @@ function createTheme(mode: ThemeMode): Theme {
     mode,
     appearance: modeAppearance[mode],
     colors,
-    shadows: createShadows(colors, mode),
+    shadows: createShadows(colors),
     spacing,
     radius,
     fontSize,
@@ -85,9 +82,7 @@ function createTheme(mode: ThemeMode): Theme {
 }
 
 export const themes: Record<ThemeMode, Theme> = {
-  light: createTheme('light'),
-  dark: createTheme('dark'),
-  blue: createTheme('blue'),
-  sunset: createTheme('sunset'),
-  mint: createTheme('mint'),
+  volt: createTheme('volt'),
+  heat: createTheme('heat'),
+  acid: createTheme('acid'),
 };

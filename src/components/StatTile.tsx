@@ -10,7 +10,7 @@ type StatTileProps = {
 
 export function StatTile({ label, value, unit, accentVar = '--color-primary' }: StatTileProps) {
   return (
-    <Card padding="sm" className="stat-tile card--flat">
+    <Card padding="sm" className="stat-tile stat-tile--pop card--flat" style={{ background: `var(${accentVar})` }}>
       <div className="stat-tile__stripe" style={{ background: `var(${accentVar})` }} />
       <AppText variant="label" color="muted">
         {label}

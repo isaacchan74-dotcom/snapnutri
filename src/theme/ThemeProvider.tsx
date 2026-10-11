@@ -17,7 +17,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const storedMode = useThemeStore((state) => state.mode);
   const setMode = useThemeStore((state) => state.setMode);
-  const mode = isThemeMode(storedMode) ? storedMode : 'light';
+  const mode = isThemeMode(storedMode) ? storedMode : 'volt';
   const theme = themes[mode];
 
   useEffect(() => {
