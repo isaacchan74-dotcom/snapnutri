@@ -50,10 +50,15 @@ export function JournalScreen() {
     }
   }, [requested]);
 
-  const dayMeals = useMemo(
-    () => meals.filter((meal) => localDayKey(new Date(meal.logged_at)) === selectedKey),
-    [meals, selectedKey],
-  );
+  const dayMeals = useMemo(() => mealsForDay(meals, selectedKey), [meals, selectedKey]);
+
+  const handleSelectDay = (key: string) => {
+    const logged = mealsForDay(meals, key);
+    setSelectedKey(key);
+    if (logged.length === 1) {
+      navigate(`/journal/${logged[0].id}`);
+    }
+  };
 
   const handleView = (next: JournalView) => {
     setView(next);
@@ -113,7 +118,7 @@ export function JournalScreen() {
               selectedKey={selectedKey}
               meals={meals}
               photoUrls={photoUrls}
-              onSelectDay={setSelectedKey}
+              onSelectDay={handleSelectDay}
               onChangeMonth={handleMonth}
             />
 
@@ -152,6 +157,10 @@ export function JournalScreen() {
       </div>
     </ScreenContainer>
   );
+}
+
+function mealsForDay(meals: MealRow[], key: string): MealRow[] {
+  return meals.filter((meal) => localDayKey(new Date(meal.logged_at)) === key);
 }
 
 function dayFromKey(key: string): Date {
