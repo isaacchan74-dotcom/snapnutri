@@ -6,7 +6,7 @@ export const STATUS_COPY: Record<PetStatus, { label: string; blurb: string }> = 
   healthy: { label: 'Healthy', blurb: 'Logged today and still chasing the target.' },
   fed: { label: 'Fed', blurb: 'Hit today’s calorie target. Nap earned.' },
   hungry: { label: 'Hungry', blurb: 'Nothing logged today — they remember yesterday, though.' },
-  sick: { label: 'Sick', blurb: 'Two or more quiet days. A meal would help.' },
+  sick: { label: 'Sleepy', blurb: 'Two or more quiet days. A meal would help.' },
 };
 
 function mealDayKeys(meals: MealRow[]): Set<string> {

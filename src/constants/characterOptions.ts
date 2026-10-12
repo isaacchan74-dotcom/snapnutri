@@ -11,7 +11,7 @@ export const CREATURES: {
 ];
 
 export const BACKGROUNDS: { value: BackgroundOption; label: string }[] = [
-  { value: 'blossom', label: 'Blossom' },
-  { value: 'meadow', label: 'Meadow' },
-  { value: 'bluebell', label: 'Bluebell' },
+  { value: 'blossom', label: 'Cherry blossom' },
+  { value: 'meadow', label: 'Green meadow' },
+  { value: 'bluebell', label: 'Blue flower field' },
 ];
