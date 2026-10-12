@@ -93,7 +93,7 @@ export function CharacterScreen() {
   return (
     <ScreenContainer
       eyebrow="Buddy"
-      title={labelFor(character.character_type)}
+      title={`${labelFor(character.character_type)} · ${statusCopy.label}`}
       subtitle={statusCopy.blurb}
       headerRight={<PetStatusBadge status={status} />}
     >
@@ -101,21 +101,16 @@ export function CharacterScreen() {
         {error ? <Banner message={error} /> : null}
         {mealError ? <Banner message={mealError} /> : null}
 
+        <CharacterPortrait
+          animalType={character.character_type}
+          status={status}
+          background={character.equipped_background}
+        />
+
         <div className="stack stack--md">
           <AppText as="h2" variant="heading">
             Buddy stats
           </AppText>
-          <Card tone="brand">
-            <div className="status-hero">
-              <AppText variant="label" color="secondary">
-                Pet status
-              </AppText>
-              <PetStatusBadge status={status} size="lg" />
-              <AppText variant="caption" color="secondary">
-                {statusCopy.blurb}
-              </AppText>
-            </div>
-          </Card>
           <Card>
             <div className="metric-block">
               <AppText variant="label" color="secondary">
@@ -166,12 +161,6 @@ export function CharacterScreen() {
             </div>
           </Card>
         </div>
-
-        <CharacterPortrait
-          animalType={character.character_type}
-          status={status}
-          background={character.equipped_background}
-        />
 
         <div className="stack stack--md">
           <AppText as="h2" variant="heading">
