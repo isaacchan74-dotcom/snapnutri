@@ -138,6 +138,8 @@ export const layout = {
   calendarCell: 48,
   mealThumb: 56,
   snapPreview: 180,
+  chatPhoto: 132,
+  chatBubble: 300,
 } as const;
 
 export const typography = {

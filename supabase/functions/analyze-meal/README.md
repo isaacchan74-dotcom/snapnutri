@@ -32,8 +32,29 @@ npx supabase functions list
 
 ## What the app sends
 
-Signed-in users only (JWT required). JSON body:
+Signed-in users only (JWT required).
+
+**Snap analyze**
 
 ```json
 { "image": "data:image/jpeg;base64,..." }
+```
+
+**AI Coach** — same function, same secret. Redeploy after pulling this update.
+
+```json
+{
+  "mode": "coach",
+  "message": "What did I eat today?",
+  "history": [{ "role": "user", "content": "..." }],
+  "photo": null,
+  "local_day": "2026-10-12",
+  "timezone_offset_minutes": 420
+}
+```
+
+Coach mode loads the caller's meals and targets from Supabase (today, yesterday, last 7 days). The OpenAI key never leaves the function. After code changes:
+
+```powershell
+npx supabase functions deploy analyze-meal
 ```

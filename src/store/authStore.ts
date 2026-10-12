@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from '../lib/env';
 import { supabase } from '../lib/supabase';
 import type { CharacterRow } from '../types/character';
 import type { ProfileRow } from '../types/profile';
+import { useCoachStore } from './coachStore';
 import { useMealStore } from './mealStore';
 
 type ActionResult = { error: string | null };
@@ -56,6 +57,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ session, user: session?.user ?? null });
 
       if (!session?.user) {
+        useMealStore.setState({ meals: [], error: null, loading: false });
+        useCoachStore.getState().reset();
         set({
           profile: null,
           profileLoading: false,
@@ -151,6 +154,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         characterUnavailable: false,
       });
       useMealStore.setState({ meals: [], error: null, loading: false });
+      useCoachStore.getState().reset();
       return { error: null };
     } catch (error) {
       return { error: toMessage(error) };
