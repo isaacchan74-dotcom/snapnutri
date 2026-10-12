@@ -90,6 +90,22 @@ export const fontFamily = {
   headline: '"Archivo Black", "Outfit", ui-sans-serif, sans-serif',
 } as const;
 
+/** Pet mood chips stay vivid across themes so status reads at a glance. */
+export const petStatus = {
+  healthy: '#3DFF7A',
+  healthyInk: '#042414',
+  healthyGlow: '0 0 22px rgba(61, 255, 122, 0.55)',
+  fed: '#FFD23C',
+  fedInk: '#3D2800',
+  fedGlow: '0 0 22px rgba(255, 210, 60, 0.55)',
+  hungry: '#FF7A1A',
+  hungryInk: '#2A1200',
+  hungryGlow: '0 0 22px rgba(255, 122, 26, 0.5)',
+  sick: '#C44B4B',
+  sickInk: '#FFF5F5',
+  sickGlow: '0 0 18px rgba(196, 75, 75, 0.45)',
+} as const;
+
 export const layout = {
   screenPaddingHorizontal: spacing.xl,
   screenPaddingVertical: spacing.lg,

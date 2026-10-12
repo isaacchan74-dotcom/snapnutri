@@ -7,6 +7,7 @@ import {
   Banner,
   Card,
   InfoRow,
+  PetStatusBadge,
   ScreenContainer,
   TargetProgress,
 } from '../../components';
@@ -92,52 +93,85 @@ export function CharacterScreen() {
   return (
     <ScreenContainer
       eyebrow="Buddy"
-      title={`${labelFor(character.character_type)} · ${statusCopy.label}`}
+      title={labelFor(character.character_type)}
       subtitle={statusCopy.blurb}
+      headerRight={<PetStatusBadge status={status} />}
     >
       <div className="stack">
         {error ? <Banner message={error} /> : null}
         {mealError ? <Banner message={mealError} /> : null}
+
+        <div className="stack stack--md">
+          <AppText as="h2" variant="heading">
+            Buddy stats
+          </AppText>
+          <Card tone="brand">
+            <div className="status-hero">
+              <AppText variant="label" color="secondary">
+                Pet status
+              </AppText>
+              <PetStatusBadge status={status} size="lg" />
+              <AppText variant="caption" color="secondary">
+                {statusCopy.blurb}
+              </AppText>
+            </div>
+          </Card>
+          <Card>
+            <div className="metric-block">
+              <AppText variant="label" color="secondary">
+                Logging streak
+              </AppText>
+              <AppText variant="metric" color="brand">
+                {streak}
+              </AppText>
+              <AppText variant="caption" color="secondary">
+                {streak === 1 ? 'day in a row' : 'days in a row'}
+              </AppText>
+            </div>
+          </Card>
+          <Card>
+            <InfoRow label="Meals today" value={String(todayMeals.length)} />
+            <InfoRow label="Meals this week" value={String(weekMealCount)} last />
+          </Card>
+          <Card>
+            <div className="stack stack--md">
+              <TargetProgress
+                label="Calories"
+                current={todayTotals.calories}
+                target={profile?.daily_calorie_target ?? null}
+                unit="kcal"
+                colorVar="--color-primary"
+              />
+              <TargetProgress
+                label="Protein"
+                current={todayTotals.protein}
+                target={profile?.daily_protein_target ?? null}
+                unit="g"
+                colorVar="--color-protein"
+              />
+              <TargetProgress
+                label="Carbs"
+                current={todayTotals.carbs}
+                target={profile?.daily_carb_target ?? null}
+                unit="g"
+                colorVar="--color-carbs"
+              />
+              <TargetProgress
+                label="Fat"
+                current={todayTotals.fat}
+                target={profile?.daily_fat_target ?? null}
+                unit="g"
+                colorVar="--color-fat"
+              />
+            </div>
+          </Card>
+        </div>
 
         <CharacterPortrait
           animalType={character.character_type}
           status={status}
           background={character.equipped_background}
         />
-
-        <div className="stack stack--md">
-          <AppText as="h2" variant="heading">
-            Animal
-          </AppText>
-          <Card>
-            <div className="pick-grid" role="radiogroup" aria-label="Animal">
-              {CREATURES.map((creature) => {
-                const selected = creature.value === character.character_type;
-                return (
-                  <button
-                    key={creature.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    className={selected ? 'pick-tile pick-tile--selected' : 'pick-tile'}
-                    disabled={saving}
-                    onClick={() => void persist({ character_type: creature.value })}
-                  >
-                    <img
-                      className="diorama__art pick-tile__art"
-                      src={characterArtSrc(creature.value, 'healthy')}
-                      alt=""
-                      draggable={false}
-                    />
-                    <AppText as="span" variant="caption">
-                      {creature.label}
-                    </AppText>
-                  </button>
-                );
-              })}
-            </div>
-          </Card>
-        </div>
 
         <div className="stack stack--md">
           <AppText as="h2" variant="heading">
@@ -175,56 +209,34 @@ export function CharacterScreen() {
 
         <div className="stack stack--md">
           <AppText as="h2" variant="heading">
-            Buddy stats
+            Animal
           </AppText>
-          <Card tone="brand">
-            <div className="metric-block">
-              <AppText variant="label" color="secondary">
-                Logging streak
-              </AppText>
-              <AppText variant="metric" color="brand">
-                {streak}
-              </AppText>
-              <AppText variant="caption" color="secondary">
-                {streak === 1 ? 'day in a row' : 'days in a row'}
-              </AppText>
-            </div>
-          </Card>
           <Card>
-            <InfoRow label="Pet status" value={statusCopy.label} />
-            <InfoRow label="Meals today" value={String(todayMeals.length)} />
-            <InfoRow label="Meals this week" value={String(weekMealCount)} last />
-          </Card>
-          <Card>
-            <div className="stack stack--md">
-              <TargetProgress
-                label="Calories"
-                current={todayTotals.calories}
-                target={profile?.daily_calorie_target ?? null}
-                unit="kcal"
-                colorVar="--color-primary"
-              />
-              <TargetProgress
-                label="Protein"
-                current={todayTotals.protein}
-                target={profile?.daily_protein_target ?? null}
-                unit="g"
-                colorVar="--color-protein"
-              />
-              <TargetProgress
-                label="Carbs"
-                current={todayTotals.carbs}
-                target={profile?.daily_carb_target ?? null}
-                unit="g"
-                colorVar="--color-carbs"
-              />
-              <TargetProgress
-                label="Fat"
-                current={todayTotals.fat}
-                target={profile?.daily_fat_target ?? null}
-                unit="g"
-                colorVar="--color-fat"
-              />
+            <div className="pick-grid" role="radiogroup" aria-label="Animal">
+              {CREATURES.map((creature) => {
+                const selected = creature.value === character.character_type;
+                return (
+                  <button
+                    key={creature.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    className={selected ? 'pick-tile pick-tile--selected' : 'pick-tile'}
+                    disabled={saving}
+                    onClick={() => void persist({ character_type: creature.value })}
+                  >
+                    <img
+                      className="diorama__art pick-tile__art"
+                      src={characterArtSrc(creature.value, 'healthy')}
+                      alt=""
+                      draggable={false}
+                    />
+                    <AppText as="span" variant="caption">
+                      {creature.label}
+                    </AppText>
+                  </button>
+                );
+              })}
             </div>
           </Card>
         </div>

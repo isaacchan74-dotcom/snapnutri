@@ -24,6 +24,7 @@ export function applyThemeToDocument(theme: Theme): void {
   setVars(root, theme.letterSpacing, 'tracking');
   setVars(root, theme.fontWeight, 'weight');
   setVars(root, theme.fontFamily, 'font');
+  setVars(root, theme.petStatus, 'status');
 
   setNumeric(root, theme.spacing, 'space', px);
   setNumeric(root, theme.radius, 'radius', px);

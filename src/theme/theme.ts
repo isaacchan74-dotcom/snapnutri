@@ -8,6 +8,7 @@ import {
   layout,
   letterSpacing,
   opacity,
+  petStatus,
   radius,
   spacing,
   typography,
@@ -56,6 +57,7 @@ export type Theme = {
   fontFamily: typeof fontFamily;
   layout: typeof layout;
   typography: typeof typography;
+  petStatus: typeof petStatus;
 };
 
 function createTheme(mode: ThemeMode): Theme {
@@ -78,6 +80,7 @@ function createTheme(mode: ThemeMode): Theme {
     fontFamily,
     layout,
     typography,
+    petStatus,
   };
 }
 
