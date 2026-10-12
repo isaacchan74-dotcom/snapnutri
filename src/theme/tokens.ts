@@ -119,6 +119,7 @@ export const layout = {
   buttonLg: 58,
   progressBarHeight: 14,
   avatarSize: 72,
+  backdropThumb: 52,
   chartHeight: 220,
   characterStage: 260,
 } as const;

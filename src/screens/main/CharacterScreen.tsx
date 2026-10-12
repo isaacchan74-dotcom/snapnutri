@@ -101,11 +101,37 @@ export function CharacterScreen() {
         {error ? <Banner message={error} /> : null}
         {mealError ? <Banner message={mealError} /> : null}
 
-        <CharacterPortrait
-          animalType={character.character_type}
-          status={status}
-          background={character.equipped_background}
-        />
+        <div className="diorama-block">
+          <CharacterPortrait
+            animalType={character.character_type}
+            status={status}
+            background={character.equipped_background}
+          />
+          <div className="backdrop-strip" role="radiogroup" aria-label="Backdrop">
+            {BACKGROUNDS.map((backdrop) => {
+              const selected = backdrop.value === character.equipped_background;
+              return (
+                <button
+                  key={backdrop.value}
+                  type="button"
+                  role="radio"
+                  aria-label={backdrop.label}
+                  aria-checked={selected}
+                  className={selected ? 'backdrop-chip backdrop-chip--selected' : 'backdrop-chip'}
+                  disabled={saving}
+                  onClick={() => void persist({ equipped_background: backdrop.value })}
+                >
+                  <img
+                    className="diorama__art backdrop-chip__art"
+                    src={backdropArtSrc(backdrop.value)}
+                    alt=""
+                    draggable={false}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="stack stack--md">
           <AppText as="h2" variant="heading">
@@ -158,40 +184,6 @@ export function CharacterScreen() {
                 unit="g"
                 colorVar="--color-fat"
               />
-            </div>
-          </Card>
-        </div>
-
-        <div className="stack stack--md">
-          <AppText as="h2" variant="heading">
-            Backdrop
-          </AppText>
-          <Card>
-            <div className="pick-grid" role="radiogroup" aria-label="Backdrop">
-              {BACKGROUNDS.map((backdrop) => {
-                const selected = backdrop.value === character.equipped_background;
-                return (
-                  <button
-                    key={backdrop.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    className={selected ? 'pick-tile pick-tile--selected' : 'pick-tile'}
-                    disabled={saving}
-                    onClick={() => void persist({ equipped_background: backdrop.value })}
-                  >
-                    <img
-                      className="diorama__art pick-tile__art pick-tile__art--wide"
-                      src={backdropArtSrc(backdrop.value)}
-                      alt=""
-                      draggable={false}
-                    />
-                    <AppText as="span" variant="caption">
-                      {backdrop.label}
-                    </AppText>
-                  </button>
-                );
-              })}
             </div>
           </Card>
         </div>
