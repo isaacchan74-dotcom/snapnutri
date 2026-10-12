@@ -4,7 +4,7 @@ import { AppText } from './AppText';
 
 type ScreenContainerProps = {
   children?: ReactNode;
-  title?: string;
+  title?: ReactNode;
   subtitle?: string;
   eyebrow?: string;
   center?: boolean;
@@ -34,11 +34,13 @@ export function ScreenContainer({
                   {eyebrow}
                 </AppText>
               ) : null}
-              {title ? (
+              {typeof title === 'string' ? (
                 <AppText as="h1" variant="title">
                   {title}
                 </AppText>
-              ) : null}
+              ) : (
+                title
+              )}
               {subtitle ? (
                 <AppText variant="body" color="secondary">
                   {subtitle}

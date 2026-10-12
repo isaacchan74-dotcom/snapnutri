@@ -18,6 +18,20 @@ export function IconButton({ label, children, className, type = 'button', ...res
   );
 }
 
+export function PenIcon() {
+  return (
+    <svg className="icon-btn__svg" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 20h4.2L19.4 8.8a1.8 1.8 0 0 0 0-2.5l-1.7-1.7a1.8 1.8 0 0 0-2.5 0L4 15.8V20Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M13.6 6.2 17.8 10.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function GearIcon() {
   return (
     <svg className="icon-btn__svg" viewBox="0 0 24 24" fill="none" aria-hidden>

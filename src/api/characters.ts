@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import {
   isBackgroundOption,
   isCharacterType,
+  normalizeDisplayName,
   type CharacterInput,
   type CharacterRow,
 } from '../types/character';
@@ -17,6 +18,7 @@ function toCharacter(row: Record<string, unknown>): CharacterRow | null {
     equipped_background: isBackgroundOption(row.equipped_background)
       ? row.equipped_background
       : 'blossom',
+    display_name: normalizeDisplayName(row.display_name),
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   };
@@ -45,17 +47,19 @@ export async function loadCharacter(userId: string): Promise<{
 }
 
 export async function saveCharacter(userId: string, input: CharacterInput): Promise<CharacterRow> {
+  const payload: Record<string, unknown> = {
+    user_id: userId,
+    character_type: input.character_type,
+    equipped_background: input.equipped_background,
+    updated_at: new Date().toISOString(),
+  };
+  if (input.display_name !== undefined) {
+    payload.display_name = normalizeDisplayName(input.display_name);
+  }
+
   const { data, error } = await supabase
     .from(TABLE)
-    .upsert(
-      {
-        user_id: userId,
-        character_type: input.character_type,
-        equipped_background: input.equipped_background,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id' },
-    )
+    .upsert(payload, { onConflict: 'user_id' })
     .select('*')
     .single();
 

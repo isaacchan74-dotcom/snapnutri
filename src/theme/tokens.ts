@@ -83,6 +83,17 @@ export const duration = {
   fast: 140,
   normal: 220,
   slow: 360,
+  particleBurstMin: 2200,
+  particleBurstMax: 4200,
+} as const;
+
+/** Chunky 32-bit specks for each diorama backdrop. */
+export const dioramaFx = {
+  blossom: ['#FF7EB3', '#FFB3D4', '#FF4F8B', '#FFE0EE'],
+  meadow: ['#F4F1E4', '#D7E8C6', '#FFFFFF'],
+  bluebell: ['#B8E4FF', '#7EC8FF', '#E8F4FF', '#FFFFFF'],
+  starGlow: '#FFF8C8',
+  starGlowSoft: '#FFE56B',
 } as const;
 
 export const fontFamily = {
@@ -111,7 +122,7 @@ export const layout = {
   screenPaddingVertical: spacing.lg,
   maxContentWidth: 540,
   appFrameWidth: 430,
-  tabBarHeight: 64,
+  tabBarHeight: 72,
   tabBarPaddingTop: spacing.sm,
   inputHeight: 54,
   buttonSm: 40,
@@ -122,6 +133,7 @@ export const layout = {
   backdropThumb: 52,
   chartHeight: 220,
   characterStage: 260,
+  particleScale: 4,
 } as const;
 
 export const typography = {

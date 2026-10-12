@@ -4,7 +4,7 @@ export { Button, type ButtonSize, type ButtonVariant } from './Button';
 export { Card, type CardTone } from './Card';
 export { CharacterPortrait } from './CharacterPortrait';
 export { EmptyState } from './EmptyState';
-export { GearIcon, IconButton } from './IconButton';
+export { GearIcon, IconButton, PenIcon } from './IconButton';
 export { InfoRow } from './InfoRow';
 export { LoadingScreen } from './LoadingScreen';
 export { MealCard } from './MealCard';

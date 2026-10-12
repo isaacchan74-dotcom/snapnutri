@@ -3,8 +3,8 @@ import { NavLink } from 'react-router-dom';
 const TABS = [
   { to: '/snap', label: 'Snap', icon: CameraIcon },
   { to: '/journal', label: 'Journal', icon: BookIcon },
+  { to: '/character', label: 'Buddy', icon: BuddyIcon, featured: true },
   { to: '/dashboard', label: 'Stats', icon: ChartIcon },
-  { to: '/character', label: 'Buddy', icon: BuddyIcon },
   { to: '/profile', label: 'Profile', icon: PersonIcon },
 ] as const;
 
@@ -17,7 +17,15 @@ export function TabBar() {
           <NavLink
             key={tab.to}
             to={tab.to}
-            className={({ isActive }) => (isActive ? 'tab-bar__item tab-bar__item--active' : 'tab-bar__item')}
+            className={({ isActive }) =>
+              [
+                'tab-bar__item',
+                isActive ? 'tab-bar__item--active' : '',
+                'featured' in tab && tab.featured ? 'tab-bar__item--featured' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')
+            }
           >
             {({ isActive }) => (
               <>

@@ -7,10 +7,13 @@ export type BackgroundOption = (typeof BACKGROUND_OPTIONS)[number];
 export const PET_STATUSES = ['healthy', 'fed', 'hungry', 'sick'] as const;
 export type PetStatus = (typeof PET_STATUSES)[number];
 
+export const DISPLAY_NAME_MAX = 20;
+
 export type CharacterRow = {
   user_id: string;
   character_type: CharacterType;
   equipped_background: BackgroundOption;
+  display_name: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -18,7 +21,14 @@ export type CharacterRow = {
 export type CharacterInput = {
   character_type: CharacterType;
   equipped_background: BackgroundOption;
+  display_name?: string | null;
 };
+
+export function normalizeDisplayName(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().slice(0, DISPLAY_NAME_MAX);
+  return trimmed.length > 0 ? trimmed : null;
+}
 
 export function isCharacterType(value: unknown): value is CharacterType {
   return typeof value === 'string' && (CHARACTER_TYPES as readonly string[]).includes(value);

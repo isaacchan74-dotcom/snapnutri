@@ -1,3 +1,4 @@
+import { DioramaParticles } from './DioramaParticles';
 import { backdropArtSrc, characterArtSrc } from '../lib/characterArt';
 import type { BackgroundOption, CharacterType, PetStatus } from '../types/character';
 
@@ -32,6 +33,7 @@ export function CharacterPortrait({
           draggable={false}
         />
       ) : null}
+      {background && !compact ? <DioramaParticles scene={background} /> : null}
       <img
         className="diorama__art diorama__pet"
         src={characterArtSrc(animalType, status)}

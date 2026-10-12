@@ -5,9 +5,17 @@ create table if not exists public.characters (
   user_id uuid primary key references auth.users (id) on delete cascade,
   character_type text not null default 'pika',
   equipped_background text not null default 'blossom',
+  display_name text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.characters add column if not exists display_name text;
+
+alter table public.characters drop constraint if exists characters_display_name_len;
+alter table public.characters
+  add constraint characters_display_name_len
+  check (display_name is null or char_length(btrim(display_name)) between 1 and 20);
 
 alter table public.characters drop column if exists equipped_hat;
 alter table public.characters drop column if exists equipped_outfit;

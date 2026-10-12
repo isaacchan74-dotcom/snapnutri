@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { saveCharacter } from '../../api/characters';
 import { CharacterPortrait } from '../../components/CharacterPortrait';
@@ -6,7 +6,9 @@ import {
   AppText,
   Banner,
   Card,
+  IconButton,
   InfoRow,
+  PenIcon,
   PetStatusBadge,
   ScreenContainer,
   TargetProgress,
@@ -17,8 +19,13 @@ import { lastLocalDays, localDayKey } from '../../lib/dates';
 import { derivePetStatus, loggingStreak, STATUS_COPY } from '../../lib/petStatus';
 import { useAuthStore } from '../../store/authStore';
 import { useMealStore } from '../../store/mealStore';
+import {
+  DISPLAY_NAME_MAX,
+  normalizeDisplayName,
+  type BackgroundOption,
+  type CharacterType,
+} from '../../types/character';
 import { addMealToTotals, emptyTotals } from '../../types/meal';
-import type { BackgroundOption, CharacterType } from '../../types/character';
 
 export function CharacterScreen() {
   const user = useAuthStore((state) => state.user);
@@ -31,6 +38,9 @@ export function CharacterScreen() {
   const mealError = useMealStore((state) => state.error);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user?.id) void loadMeals(user.id);
@@ -70,9 +80,12 @@ export function CharacterScreen() {
     );
   }
 
+  const buddyName = character.display_name ?? labelFor(character.character_type);
+
   const persist = async (patch: {
     character_type?: CharacterType;
     equipped_background?: BackgroundOption;
+    display_name?: string | null;
   }) => {
     if (!user) return;
     setError(null);
@@ -81,21 +94,89 @@ export function CharacterScreen() {
       const next = await saveCharacter(user.id, {
         character_type: patch.character_type ?? character.character_type,
         equipped_background: patch.equipped_background ?? character.equipped_background,
+        ...(patch.display_name !== undefined ? { display_name: patch.display_name } : {}),
       });
       setCharacter(next);
+      setRenaming(false);
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Could not save that look.');
+      const message = saveError instanceof Error ? saveError.message : 'Could not save that look.';
+      setError(
+        message.toLowerCase().includes('display_name')
+          ? 'Paste the latest supabase/characters.sql into the SQL editor to unlock nicknames, then refresh.'
+          : message,
+      );
     } finally {
       setSaving(false);
     }
   };
 
+  useEffect(() => {
+    if (renaming) nameInputRef.current?.focus();
+  }, [renaming]);
+
+  const startRename = () => {
+    setNameDraft(buddyName);
+    setRenaming(true);
+  };
+
+  const saveName = () => {
+    const nextName = normalizeDisplayName(nameDraft);
+    void persist({ display_name: nextName });
+  };
+
   return (
     <ScreenContainer
       eyebrow="Buddy"
-      title={`${labelFor(character.character_type)} · ${statusCopy.label}`}
+      title={
+        <div className="buddy-title">
+          {renaming ? (
+            <form
+              className="buddy-title__name"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveName();
+              }}
+            >
+              <label className="sr-only" htmlFor="buddy-name">
+                Buddy name
+              </label>
+              <input
+                id="buddy-name"
+                ref={nameInputRef}
+                className="buddy-title__input"
+                value={nameDraft}
+                maxLength={DISPLAY_NAME_MAX}
+                disabled={saving}
+                onChange={(event) => setNameDraft(event.target.value)}
+                onBlur={() => {
+                  if (document.activeElement === nameInputRef.current) return;
+                  saveName();
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    setRenaming(false);
+                  }
+                }}
+              />
+            </form>
+          ) : (
+            <AppText as="h1" variant="title" className="buddy-title__name">
+              {buddyName}
+              <IconButton
+                label="Rename buddy"
+                className="icon-btn--inline"
+                onClick={startRename}
+                disabled={saving}
+              >
+                <PenIcon />
+              </IconButton>
+            </AppText>
+          )}
+          <PetStatusBadge status={status} />
+        </div>
+      }
       subtitle={statusCopy.blurb}
-      headerRight={<PetStatusBadge status={status} />}
     >
       <div className="stack">
         {error ? <Banner message={error} /> : null}
@@ -134,9 +215,14 @@ export function CharacterScreen() {
         </div>
 
         <div className="stack stack--md">
-          <AppText as="h2" variant="heading">
-            Buddy stats
-          </AppText>
+          <div className="stack stack--sm">
+            <AppText as="h2" variant="heading">
+              {`${buddyName}'s Stats`}
+            </AppText>
+            <AppText variant="caption" color="secondary">
+              {`This is ${buddyName}'s fuel log. Meals you snap or type in feed them — skip too many days and they get hungry, even sick.`}
+            </AppText>
+          </div>
           <Card>
             <div className="metric-block">
               <AppText variant="label" color="secondary">
