@@ -1,0 +1,4 @@
+# Local / CLI config. The OpenAI key is NOT stored here.
+
+[functions.analyze-meal]
+verify_jwt = true

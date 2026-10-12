@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { fetchMeal } from '../../api/meals';
 import { Banner, Button, ScreenContainer, TextField } from '../../components';
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from '../../lib/dates';
 import { useAuthStore } from '../../store/authStore';
 import { useMealStore } from '../../store/mealStore';
+import type { AnalyzeMealSuccess } from '../../types/analyze';
 import type { MealInput } from '../../types/meal';
 
 type FormState = {
@@ -30,6 +31,9 @@ export function MealFormScreen() {
   const { mealId } = useParams();
   const isEditing = Boolean(mealId);
   const navigate = useNavigate();
+  const location = useLocation();
+  const estimate = (location.state as { estimate?: AnalyzeMealSuccess } | null)?.estimate;
+  const fromSnap = Boolean(estimate);
 
   const user = useAuthStore((state) => state.user);
   const meals = useMealStore((state) => state.meals);
@@ -45,7 +49,7 @@ export function MealFormScreen() {
 
   useEffect(() => {
     if (!mealId) {
-      setForm(emptyForm());
+      setForm(estimate ? toFormFromEstimate(estimate) : emptyForm());
       setLoadingMeal(false);
       return;
     }
@@ -80,7 +84,7 @@ export function MealFormScreen() {
     return () => {
       cancelled = true;
     };
-  }, [mealId, meals]);
+  }, [estimate, mealId, meals]);
 
   const parsed = parseForm(form);
 
@@ -120,12 +124,14 @@ export function MealFormScreen() {
 
   return (
     <ScreenContainer
-      eyebrow={isEditing ? 'Edit meal' : 'New meal'}
-      title={isEditing ? 'Tweak the log ✏️' : 'What did you eat? 🍽️'}
+      eyebrow={isEditing ? 'Edit meal' : fromSnap ? 'AI estimate' : 'New meal'}
+      title={isEditing ? 'Tweak the log ✏️' : fromSnap ? 'Does this look right?' : 'What did you eat? 🍽️'}
       subtitle={
         isEditing
           ? 'Fix a typo or delete it if it was a ghost entry.'
-          : 'Name it, count it, done. Date defaults to now.'
+          : fromSnap
+            ? 'These are estimates. Edit anything, then save to your journal.'
+            : 'Name it, count it, done. Date defaults to now.'
       }
       footer={
         <>
@@ -152,6 +158,12 @@ export function MealFormScreen() {
     >
       <form id="meal-form" className="stack" onSubmit={handleSubmit}>
         {error ? <Banner message={error} /> : null}
+        {fromSnap ? (
+          <Banner
+            tone="info"
+            message={`AI guess · ~${form.calories || '—'} cal. Confirm or correct it.`}
+          />
+        ) : null}
 
         <TextField
           label="Food name"
@@ -170,6 +182,7 @@ export function MealFormScreen() {
           type="number"
           min={0}
           step={1}
+          helper={fromSnap && form.calories ? `Estimate · ~${form.calories} cal` : undefined}
           error={form.calories ? parsed.fieldErrors.calories : null}
         />
 
@@ -183,6 +196,7 @@ export function MealFormScreen() {
             type="number"
             min={0}
             step={0.1}
+            helper={fromSnap && form.protein ? `~${form.protein} g` : undefined}
             error={form.protein ? parsed.fieldErrors.protein : null}
           />
           <TextField
@@ -194,6 +208,7 @@ export function MealFormScreen() {
             type="number"
             min={0}
             step={0.1}
+            helper={fromSnap && form.carbs ? `~${form.carbs} g` : undefined}
             error={form.carbs ? parsed.fieldErrors.carbs : null}
           />
         </div>
@@ -207,6 +222,7 @@ export function MealFormScreen() {
           type="number"
           min={0}
           step={0.1}
+          helper={fromSnap && form.fat ? `~${form.fat} g` : undefined}
           error={form.fat ? parsed.fieldErrors.fat : null}
         />
 
@@ -220,6 +236,17 @@ export function MealFormScreen() {
       </form>
     </ScreenContainer>
   );
+}
+
+function toFormFromEstimate(estimate: AnalyzeMealSuccess): FormState {
+  return {
+    foodName: estimate.food_name,
+    calories: String(Math.round(estimate.calories)),
+    protein: String(estimate.protein),
+    carbs: String(estimate.carbs),
+    fat: String(estimate.fat),
+    loggedAt: toDatetimeLocalValue(new Date()),
+  };
 }
 
 function toForm(meal: {
