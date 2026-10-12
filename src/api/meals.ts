@@ -14,6 +14,7 @@ function toMeal(row: Record<string, unknown>): MealRow {
     fat: Number(row.fat) || 0,
     logged_at: String(row.logged_at),
     created_at: String(row.created_at),
+    photo_path: typeof row.photo_path === 'string' && row.photo_path ? row.photo_path : null,
   };
 }
 
@@ -46,6 +47,7 @@ export async function createMeal(userId: string, input: MealInput): Promise<Meal
       carbs: input.carbs,
       fat: input.fat,
       logged_at: input.logged_at,
+      ...(input.photo_path ? { photo_path: input.photo_path } : {}),
     })
     .select('*')
     .single();

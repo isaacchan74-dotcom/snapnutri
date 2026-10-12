@@ -1,13 +1,19 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import { activeMealPhotoPath, signMealPhotoUrls } from '../../api/mealPhotos';
 import { fetchMeal } from '../../api/meals';
 import { Banner, Button, ScreenContainer, TextField } from '../../components';
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from '../../lib/dates';
 import { useAuthStore } from '../../store/authStore';
 import { useMealStore } from '../../store/mealStore';
 import type { AnalyzeMealSuccess } from '../../types/analyze';
-import type { MealInput } from '../../types/meal';
+import type { MealInput, MealRow } from '../../types/meal';
+
+type MealFormLocationState = {
+  estimate?: AnalyzeMealSuccess;
+  photo?: string;
+};
 
 type FormState = {
   foodName: string;
@@ -32,8 +38,10 @@ export function MealFormScreen() {
   const isEditing = Boolean(mealId);
   const navigate = useNavigate();
   const location = useLocation();
-  const estimate = (location.state as { estimate?: AnalyzeMealSuccess } | null)?.estimate;
-  const fromSnap = Boolean(estimate);
+  const locationState = location.state as MealFormLocationState | null;
+  const estimate = locationState?.estimate;
+  const incomingPhoto = locationState?.photo ?? null;
+  const fromSnap = Boolean(estimate || incomingPhoto);
 
   const user = useAuthStore((state) => state.user);
   const meals = useMealStore((state) => state.meals);
@@ -42,26 +50,47 @@ export function MealFormScreen() {
   const remove = useMealStore((state) => state.remove);
 
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [savedMeal, setSavedMeal] = useState<MealRow | null>(null);
+  const [savedPhotoUrl, setSavedPhotoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingMeal, setLoadingMeal] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const photoPreview = incomingPhoto ?? savedPhotoUrl;
 
   useEffect(() => {
     if (!mealId) {
       setForm(estimate ? toFormFromEstimate(estimate) : emptyForm());
-      setLoadingMeal(false);
-      return;
-    }
-
-    const cached = meals.find((meal) => meal.id === mealId);
-    if (cached) {
-      setForm(toForm(cached));
+      setSavedMeal(null);
+      setSavedPhotoUrl(null);
       setLoadingMeal(false);
       return;
     }
 
     let cancelled = false;
+
+    const applyMeal = (meal: MealRow) => {
+      setForm(toForm(meal));
+      setSavedMeal(meal);
+      const path = activeMealPhotoPath(meal);
+      if (!path) {
+        setSavedPhotoUrl(null);
+        return;
+      }
+      void signMealPhotoUrls([path]).then((urls) => {
+        if (!cancelled) setSavedPhotoUrl(urls[path] ?? null);
+      });
+    };
+
+    const cached = meals.find((meal) => meal.id === mealId);
+    if (cached) {
+      applyMeal(cached);
+      setLoadingMeal(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     setLoadingMeal(true);
     void fetchMeal(mealId)
       .then((meal) => {
@@ -70,7 +99,7 @@ export function MealFormScreen() {
           setError('That meal wandered off. Try adding it again.');
           return;
         }
-        setForm(toForm(meal));
+        applyMeal(meal);
       })
       .catch((loadError: unknown) => {
         if (!cancelled) {
@@ -98,7 +127,7 @@ export function MealFormScreen() {
       if (mealId) {
         await save(mealId, parsed.input);
       } else {
-        await add(user.id, parsed.input);
+        await add(user.id, parsed.input, incomingPhoto);
       }
       navigate('/journal');
     } catch (saveError) {
@@ -158,6 +187,11 @@ export function MealFormScreen() {
     >
       <form id="meal-form" className="stack" onSubmit={handleSubmit}>
         {error ? <Banner message={error} /> : null}
+        {photoPreview ? (
+          <img className="snap-frame snap-frame--preview" src={photoPreview} alt="Meal photo" />
+        ) : savedMeal && !savedMeal.photo_path ? (
+          <Banner tone="info" message="Typed in by hand — no photo on this log." />
+        ) : null}
         {fromSnap ? (
           <Banner
             tone="info"

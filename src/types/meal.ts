@@ -8,6 +8,7 @@ export type MealRow = {
   fat: number;
   logged_at: string;
   created_at: string;
+  photo_path: string | null;
 };
 
 export type MealInput = {
@@ -17,6 +18,7 @@ export type MealInput = {
   carbs: number;
   fat: number;
   logged_at: string;
+  photo_path?: string | null;
 };
 
 export type MealTotals = {

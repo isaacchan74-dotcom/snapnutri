@@ -1,26 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { activeMealPhotoPath } from '../../api/mealPhotos';
 import {
   AppText,
   Banner,
   Button,
   EmptyState,
   MealCard,
+  PhotoCalendar,
   ScreenContainer,
   SegmentedControl,
 } from '../../components';
-import { dayHeading, localDayKey } from '../../lib/dates';
+import { dayHeading, localDayKey, startOfLocalMonth } from '../../lib/dates';
+import { useMealPhotoUrls } from '../../lib/useMealPhotoUrls';
 import { useAuthStore } from '../../store/authStore';
 import { useMealStore } from '../../store/mealStore';
 import type { MealRow } from '../../types/meal';
 import { StatsPanel } from './StatsPanel';
-
-type DayGroup = {
-  key: string;
-  label: string;
-  meals: MealRow[];
-};
 
 type JournalView = 'meals' | 'stats';
 
@@ -39,6 +36,9 @@ export function JournalScreen() {
   const load = useMealStore((state) => state.load);
   const requested = searchParams.get('view');
   const [view, setView] = useState<JournalView>(requested === 'stats' ? 'stats' : 'meals');
+  const [month, setMonth] = useState(() => startOfLocalMonth(new Date()));
+  const [selectedKey, setSelectedKey] = useState(() => localDayKey(new Date()));
+  const photoUrls = useMealPhotoUrls(meals);
 
   useEffect(() => {
     if (user?.id) void load(user.id);
@@ -50,11 +50,30 @@ export function JournalScreen() {
     }
   }, [requested]);
 
-  const groups = useMemo(() => groupMeals(meals), [meals]);
+  const dayMeals = useMemo(
+    () => meals.filter((meal) => localDayKey(new Date(meal.logged_at)) === selectedKey),
+    [meals, selectedKey],
+  );
 
   const handleView = (next: JournalView) => {
     setView(next);
     setSearchParams(next === 'stats' ? { view: 'stats' } : {}, { replace: true });
+  };
+
+  const handleMonth = (next: Date) => {
+    const today = new Date();
+    setMonth(startOfLocalMonth(next));
+    if (startOfLocalMonth(next).getTime() === startOfLocalMonth(today).getTime()) {
+      setSelectedKey(localDayKey(today));
+      return;
+    }
+    const firstLogged = meals.find((meal) => {
+      const logged = new Date(meal.logged_at);
+      return (
+        logged.getFullYear() === next.getFullYear() && logged.getMonth() === next.getMonth()
+      );
+    });
+    setSelectedKey(firstLogged ? localDayKey(new Date(firstLogged.logged_at)) : localDayKey(next));
   };
 
   return (
@@ -63,10 +82,10 @@ export function JournalScreen() {
       subtitle={
         view === 'stats'
           ? 'Loud numbers. Honest macros. A week that actually looks like a poster.'
-          : 'Every bite you log, newest first.'
+          : 'A month of plates. Tap a day, then tweak the log.'
       }
       headerRight={
-        view === 'meals' && meals.length > 0 ? (
+        view === 'meals' ? (
           <Button
             label="+ Add"
             size="sm"
@@ -87,32 +106,47 @@ export function JournalScreen() {
           <AppText variant="caption" color="muted" align="center">
             Loading your meals…
           </AppText>
-        ) : meals.length === 0 ? (
-          <EmptyState
-            emoji="🍽️"
-            title="Your journal is empty"
-            message="Snap a plate or type one in. Stats fill in from the same log."
-          >
-            <Button label="+ Add meal" onClick={() => navigate('/journal/new')} />
-          </EmptyState>
         ) : (
           <div className="stack">
-            {groups.map((group) => (
-              <section key={group.key} className="stack stack--md">
-                <AppText as="h2" variant="label" color="muted">
-                  {group.label}
-                </AppText>
+            <PhotoCalendar
+              month={month}
+              selectedKey={selectedKey}
+              meals={meals}
+              photoUrls={photoUrls}
+              onSelectDay={setSelectedKey}
+              onChangeMonth={handleMonth}
+            />
+
+            <section className="stack stack--md">
+              <AppText as="h2" variant="label" color="muted">
+                {dayHeading(dayFromKey(selectedKey))}
+              </AppText>
+
+              {dayMeals.length === 0 ? (
+                <EmptyState
+                  emoji="🍽️"
+                  title={meals.length === 0 ? 'Your journal is empty' : 'Nothing this day'}
+                  message={
+                    meals.length === 0
+                      ? 'Snap a plate or type one in. Photo days light up the calendar.'
+                      : 'No plates on this date. Snap one or type it in.'
+                  }
+                >
+                  <Button label="+ Add meal" onClick={() => navigate('/journal/new')} />
+                </EmptyState>
+              ) : (
                 <div className="stack stack--sm">
-                  {group.meals.map((meal) => (
+                  {dayMeals.map((meal) => (
                     <MealCard
                       key={meal.id}
                       meal={meal}
+                      photoUrl={photoUrlFor(meal, photoUrls)}
                       onOpen={() => navigate(`/journal/${meal.id}`)}
                     />
                   ))}
                 </div>
-              </section>
-            ))}
+              )}
+            </section>
           </div>
         )}
       </div>
@@ -120,19 +154,12 @@ export function JournalScreen() {
   );
 }
 
-function groupMeals(meals: MealRow[]): DayGroup[] {
-  const groups = new Map<string, DayGroup>();
+function dayFromKey(key: string): Date {
+  const [year, month, day] = key.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
 
-  meals.forEach((meal) => {
-    const date = new Date(meal.logged_at);
-    const key = localDayKey(date);
-    const existing = groups.get(key);
-    if (existing) {
-      existing.meals.push(meal);
-      return;
-    }
-    groups.set(key, { key, label: dayHeading(date), meals: [meal] });
-  });
-
-  return [...groups.values()];
+function photoUrlFor(meal: MealRow, urls: Record<string, string>): string | undefined {
+  const path = activeMealPhotoPath(meal);
+  return path ? urls[path] : undefined;
 }

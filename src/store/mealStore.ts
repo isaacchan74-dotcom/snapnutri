@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { deleteMealPhoto, purgeExpiredMealPhotos, toPhotoError, uploadMealPhoto } from '../api/mealPhotos';
 import { createMeal, deleteMeal, fetchMeals, updateMeal } from '../api/meals';
 import type { MealInput, MealRow } from '../types/meal';
 
@@ -8,7 +9,7 @@ type MealState = {
   loading: boolean;
   error: string | null;
   load: (userId: string) => Promise<void>;
-  add: (userId: string, input: MealInput) => Promise<MealRow>;
+  add: (userId: string, input: MealInput, photoDataUrl?: string | null) => Promise<MealRow>;
   save: (id: string, input: MealInput) => Promise<MealRow>;
   remove: (id: string) => Promise<void>;
 };
@@ -18,7 +19,7 @@ function toMealError(error: unknown): string {
   if (message.toLowerCase().includes('could not find the table')) {
     return 'The meals table is not in Supabase yet. Paste supabase/meals.sql into the SQL editor, then refresh.';
   }
-  return message;
+  return toPhotoError(message, message);
 }
 
 function sortNewest(meals: MealRow[]): MealRow[] {
@@ -35,7 +36,8 @@ export const useMealStore = create<MealState>((set, get) => ({
   load: async (userId) => {
     set({ loading: true, error: null });
     try {
-      set({ meals: await fetchMeals(userId), loading: false });
+      const meals = await fetchMeals(userId);
+      set({ meals: await purgeExpiredMealPhotos(meals), loading: false });
     } catch (error) {
       set({
         loading: false,
@@ -44,12 +46,19 @@ export const useMealStore = create<MealState>((set, get) => ({
     }
   },
 
-  add: async (userId, input) => {
+  add: async (userId, input, photoDataUrl) => {
+    let photoPath: string | null = null;
     try {
-      const meal = await createMeal(userId, input);
+      if (photoDataUrl) {
+        photoPath = await uploadMealPhoto(userId, photoDataUrl);
+      }
+      const meal = await createMeal(userId, { ...input, photo_path: photoPath });
       set({ meals: sortNewest([meal, ...get().meals.filter((row) => row.id !== meal.id)]) });
       return meal;
     } catch (error) {
+      if (photoPath) {
+        await deleteMealPhoto(photoPath).catch(() => undefined);
+      }
       throw new Error(toMealError(error));
     }
   },
@@ -65,8 +74,12 @@ export const useMealStore = create<MealState>((set, get) => ({
   },
 
   remove: async (id) => {
+    const existing = get().meals.find((meal) => meal.id === id);
     try {
       await deleteMeal(id);
+      if (existing?.photo_path) {
+        await deleteMealPhoto(existing.photo_path).catch(() => undefined);
+      }
       set({ meals: get().meals.filter((row) => row.id !== id) });
     } catch (error) {
       throw new Error(toMealError(error));

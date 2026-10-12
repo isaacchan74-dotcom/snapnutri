@@ -1,4 +1,5 @@
 import { deleteCharacter } from './characters';
+import { deleteMealPhotosForUser } from './mealPhotos';
 import { deleteMealsForUser } from './meals';
 import { deleteProfile } from './profiles';
 
@@ -18,6 +19,15 @@ function toDeleteError(error: unknown, fallback: string): Error {
  * Auth sign-out is left to the caller so the UI can confirm first.
  */
 export async function deleteAccountData(userId: string): Promise<void> {
+  try {
+    await deleteMealPhotosForUser(userId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : '';
+    if (!message.includes('not set up yet') && !message.includes('could not find')) {
+      throw toDeleteError(error, 'Could not delete your meal photos.');
+    }
+  }
+
   try {
     await deleteMealsForUser(userId);
   } catch (error) {

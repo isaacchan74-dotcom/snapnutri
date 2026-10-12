@@ -84,7 +84,7 @@ export function CameraScreen() {
         setRetakeReason(result.reason);
         return;
       }
-      navigate('/journal/new', { state: { estimate: result } });
+      navigate('/journal/new', { state: { estimate: result, photo: preview } });
     } catch (analyzeError) {
       setError(analyzeError instanceof Error ? analyzeError.message : 'Could not analyze that photo.');
     } finally {

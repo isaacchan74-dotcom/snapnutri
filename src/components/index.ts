@@ -9,6 +9,7 @@ export { InfoRow } from './InfoRow';
 export { LoadingScreen } from './LoadingScreen';
 export { MealCard } from './MealCard';
 export { OptionTile } from './OptionTile';
+export { PhotoCalendar } from './PhotoCalendar';
 export { PetStatusBadge } from './PetStatusBadge';
 export { ProgressBar } from './ProgressBar';
 export { ScreenContainer } from './ScreenContainer';

@@ -66,6 +66,7 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- Meals (manual logging). Safe to re-run.
+-- Photo files: also run supabase/meal-photos.sql for the private bucket + 60-day purge.
 create table if not exists public.meals (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -75,7 +76,8 @@ create table if not exists public.meals (
   carbs numeric(6, 1) not null check (carbs >= 0),
   fat numeric(6, 1) not null check (fat >= 0),
   logged_at timestamptz not null default now(),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  photo_path text
 );
 
 create index if not exists meals_user_logged_at_idx

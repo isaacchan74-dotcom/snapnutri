@@ -135,6 +135,9 @@ export const layout = {
   chartHeight: 220,
   characterStage: 260,
   particleScale: 4,
+  calendarCell: 48,
+  mealThumb: 56,
+  snapPreview: 180,
 } as const;
 
 export const typography = {

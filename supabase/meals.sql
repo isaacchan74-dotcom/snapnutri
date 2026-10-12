@@ -1,5 +1,6 @@
 -- SnapNutri — meals table
 -- Run this once in the Supabase SQL editor (Dashboard → SQL Editor → New query).
+-- For photo storage + 60-day file purge, also run supabase/meal-photos.sql.
 
 create table if not exists public.meals (
   id uuid primary key default gen_random_uuid(),
@@ -10,7 +11,8 @@ create table if not exists public.meals (
   carbs numeric(6, 1) not null check (carbs >= 0),
   fat numeric(6, 1) not null check (fat >= 0),
   logged_at timestamptz not null default now(),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  photo_path text
 );
 
 create index if not exists meals_user_logged_at_idx

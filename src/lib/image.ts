@@ -23,6 +23,13 @@ export async function fileToLowDetailDataUrl(file: File): Promise<string> {
   return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
 }
 
+export function dataUrlToJpegBlob(dataUrl: string): Blob {
+  const encoded = dataUrl.split(',')[1];
+  if (!encoded) throw new Error('Could not read that photo.');
+  const bytes = Uint8Array.from(atob(encoded), (char) => char.charCodeAt(0));
+  return new Blob([bytes], { type: 'image/jpeg' });
+}
+
 export function canvasToLowDetailDataUrl(video: HTMLVideoElement): string {
   const scale = Math.min(1, MAX_EDGE / Math.max(video.videoWidth, video.videoHeight));
   const width = Math.max(1, Math.round(video.videoWidth * scale));
