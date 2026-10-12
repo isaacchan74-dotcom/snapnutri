@@ -3,6 +3,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { LoadingScreen } from '../components';
 import { isSupabaseConfigured } from '../lib/env';
 import { CameraScreen } from '../screens/main/CameraScreen';
+import { CoachScreen } from '../screens/main/CoachScreen';
 import { DashboardScreen } from '../screens/main/DashboardScreen';
 import { JournalScreen } from '../screens/main/JournalScreen';
 import { MealFormScreen } from '../screens/main/MealFormScreen';
@@ -60,6 +61,7 @@ export function AppRoutes() {
 
       <Route element={<AppRoute />}>
         <Route path="/snap" element={<CameraScreen />} />
+        <Route path="/coach" element={<CoachScreen />} />
         <Route path="/journal" element={<JournalScreen />} />
         <Route path="/journal/new" element={<MealFormScreen />} />
         <Route path="/journal/:mealId" element={<MealFormScreen />} />

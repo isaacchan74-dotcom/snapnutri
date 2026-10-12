@@ -145,10 +145,16 @@ export function CameraScreen() {
           </div>
         ) : preview ? (
           <div className="stack stack--md">
-            <Button label="Analyze meal" onClick={() => void handleAnalyze()} loading={analyzing} />
+            <Button label="Add to Journal" onClick={() => void handleAnalyze()} loading={analyzing} />
+            <Button
+              label="Send to AI Coach"
+              variant="secondary"
+              onClick={() => navigate('/coach', { state: { photo: preview } })}
+              disabled={analyzing}
+            />
             <Button
               label="Choose another photo"
-              variant="secondary"
+              variant="ghost"
               onClick={() => {
                 setPreview(null);
                 setRetakeReason(null);
