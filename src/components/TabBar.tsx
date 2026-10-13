@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 
 const SIDE_TABS = [
-  { to: '/coach', label: 'AI Coach', icon: SparkIcon },
+  { to: '/coach', label: 'Coach', icon: SparkIcon },
   { to: '/journal', label: 'Journal', icon: BookIcon },
   { to: '/character', label: 'Buddy', icon: BuddyIcon },
   { to: '/profile', label: 'Profile', icon: PersonIcon },

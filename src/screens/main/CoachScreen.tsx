@@ -53,7 +53,7 @@ export function CoachScreen() {
 
   return (
     <ScreenContainer
-      eyebrow="AI Coach"
+      eyebrow="Coach"
       title="In the huddle"
       subtitle="Your real log. Straight talk."
       footer={

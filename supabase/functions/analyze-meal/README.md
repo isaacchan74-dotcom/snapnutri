@@ -40,7 +40,7 @@ Signed-in users only (JWT required).
 { "image": "data:image/jpeg;base64,..." }
 ```
 
-**AI Coach** — same function, same secret. Redeploy after pulling this update.
+**Coach** — same function, same secret. Redeploy after pulling this update.
 
 ```json
 {

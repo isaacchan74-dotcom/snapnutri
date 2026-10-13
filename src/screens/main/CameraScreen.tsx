@@ -147,7 +147,7 @@ export function CameraScreen() {
           <div className="stack stack--md">
             <Button label="Add to Journal" onClick={() => void handleAnalyze()} loading={analyzing} />
             <Button
-              label="Send to AI Coach"
+              label="Send to Coach"
               variant="secondary"
               onClick={() => navigate('/coach', { state: { photo: preview } })}
               disabled={analyzing}
