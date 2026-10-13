@@ -7,7 +7,9 @@ import { isSupabaseConfigured } from '../lib/env';
 import { supabase } from '../lib/supabase';
 import type { CharacterRow } from '../types/character';
 import type { ProfileRow } from '../types/profile';
+import { useCoachStore } from './coachStore';
 import { useMealStore } from './mealStore';
+import { usePetStore } from './petStore';
 
 type ActionResult = { error: string | null };
 type SignUpResult = ActionResult & { needsEmailConfirmation: boolean };
@@ -57,6 +59,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (!session?.user) {
         useMealStore.setState({ meals: [], error: null, loading: false });
+        useCoachStore.getState().reset();
+        usePetStore.getState().reset();
         set({
           profile: null,
           profileLoading: false,
@@ -124,6 +128,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
+      // Confirmation links return to whichever deployment the user signed up on.
+      options: { emailRedirectTo: `${window.location.origin}/login` },
     });
 
     return {
@@ -152,6 +158,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         characterUnavailable: false,
       });
       useMealStore.setState({ meals: [], error: null, loading: false });
+      useCoachStore.getState().reset();
+      usePetStore.getState().reset();
       return { error: null };
     } catch (error) {
       return { error: toMessage(error) };

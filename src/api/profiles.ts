@@ -1,4 +1,5 @@
 import { calculateDailyTargets } from '../lib/nutrition';
+import { isMissingSchema, previewGet, previewSet } from '../lib/preview';
 import { supabase } from '../lib/supabase';
 import type { DailyTargets, ProfileMeasurements, ProfileRow } from '../types/profile';
 
@@ -8,7 +9,13 @@ export async function fetchProfile(userId: string): Promise<ProfileRow | null> {
   const { data, error } = await supabase.from(TABLE).select('*').eq('id', userId).maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data as ProfileRow | null;
+  return data ? withPreviewPrefs(data as ProfileRow) : null;
+}
+
+/** Before the migration, name and preferences come from the browser. */
+function withPreviewPrefs(row: ProfileRow): ProfileRow {
+  if ('night_mode' in row) return row;
+  return { ...row, ...(previewGet('profiles', row.id) ?? {}) } as ProfileRow;
 }
 
 type SaveProfileInput = {
@@ -54,7 +61,35 @@ export async function saveProfile({
     }
     throw new Error(error.message);
   }
+  return withPreviewPrefs(data as ProfileRow);
+}
+
+/** Name and Profile-tab preferences. Needs supabase/journal-and-pet.sql. */
+export async function updateProfilePrefs(
+  userId: string,
+  patch: Partial<Pick<ProfileRow, 'display_name' | 'night_mode' | 'reminders'>>,
+): Promise<ProfileRow> {
+  const { data, error } = await supabase.from(TABLE).update(patch).eq('id', userId).select('*').single();
+
+  if (error && isMissingSchema(error.message)) {
+    previewSet('profiles', userId, patch);
+    const profile = await fetchProfile(userId);
+    if (!profile) throw new Error('Could not find your profile.');
+    return profile;
+  }
+  if (error) throw new Error(toSchemaError(error.message));
   return data as ProfileRow;
+}
+
+export function toSchemaError(message: string): string {
+  const lower = message.toLowerCase();
+  if (
+    (lower.includes('column') || lower.includes('could not find')) &&
+    /display_name|night_mode|reminders|meal_type|foods|portion|shared_with|vegetable_servings|reviewed|pet_progress/.test(lower)
+  ) {
+    return 'The database needs a quick update. Run supabase/journal-and-pet.sql in the Supabase SQL editor, then refresh.';
+  }
+  return message;
 }
 
 export async function deleteProfile(userId: string): Promise<void> {

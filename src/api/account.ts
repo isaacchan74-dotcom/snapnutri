@@ -1,6 +1,7 @@
 import { deleteCharacter } from './characters';
 import { deleteMealPhotosForUser } from './mealPhotos';
 import { deleteMealsForUser } from './meals';
+import { deletePet } from './pet';
 import { deleteProfile } from './profiles';
 
 function toDeleteError(error: unknown, fallback: string): Error {
@@ -44,6 +45,12 @@ export async function deleteAccountData(userId: string): Promise<void> {
     if (!message.includes('could not find the table')) {
       throw toDeleteError(error, 'Could not delete your character.');
     }
+  }
+
+  try {
+    await deletePet(userId);
+  } catch (error) {
+    throw toDeleteError(error, 'Could not delete Pika’s progress.');
   }
 
   try {

@@ -1,3 +1,8 @@
+export const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Coffee', 'Drinks'] as const;
+export type MealType = (typeof MEAL_TYPES)[number];
+
+export const SHARED_OPTIONS = ['Just me', '2 people', '3 people', '4+ people'] as const;
+
 export type MealRow = {
   id: string;
   user_id: string;
@@ -10,6 +15,13 @@ export type MealRow = {
   created_at: string;
   photo_path: string | null;
   description: string | null;
+  meal_type: MealType | null;
+  foods: string[];
+  portion: number;
+  shared_with: string;
+  vegetable_servings: number;
+  /** false = a draft the user has not reviewed yet. */
+  reviewed: boolean;
   ai_insight: MealInsight | null;
 };
 
@@ -32,7 +44,17 @@ export type MealInput = {
   photo_path?: string | null;
   /** `null` clears it; `undefined` leaves the stored value alone. */
   description?: string | null;
+  meal_type?: MealType | null;
+  foods?: string[];
+  portion?: number;
+  shared_with?: string;
+  vegetable_servings?: number;
+  reviewed?: boolean;
 };
+
+export function isMealType(value: unknown): value is MealType {
+  return typeof value === 'string' && (MEAL_TYPES as readonly string[]).includes(value);
+}
 
 export type MealTotals = {
   calories: number;

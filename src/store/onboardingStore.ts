@@ -4,6 +4,7 @@ import type { HeightUnit, WeightUnit } from '../lib/units';
 import type { ActivityLevel, Gender, Goal, ProfileMeasurements } from '../types/profile';
 
 type OnboardingDraft = {
+  name: string;
   gender: Gender | null;
   age: number | null;
   height: number | null;
@@ -23,6 +24,7 @@ type OnboardingState = OnboardingDraft & {
 };
 
 const emptyDraft: OnboardingDraft = {
+  name: '',
   gender: null,
   age: null,
   height: null,

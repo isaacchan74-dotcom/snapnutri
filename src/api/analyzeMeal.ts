@@ -8,7 +8,12 @@ export async function analyzeMealPhoto(imageDataUrl: string): Promise<AnalyzeMea
   );
 
   if (error) {
-    const fromBody = data && typeof data === 'object' && 'error' in data ? data.error : null;
+    const context = (error as { context?: unknown }).context;
+    let fromBody: string | null = null;
+    if (context instanceof Response) {
+      const body = (await context.clone().json().catch(() => null)) as { error?: unknown } | null;
+      fromBody = typeof body?.error === 'string' ? body.error : null;
+    }
     throw new Error(friendlyInvokeError(fromBody || error.message));
   }
 

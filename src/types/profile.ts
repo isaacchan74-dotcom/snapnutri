@@ -38,7 +38,14 @@ export type ProfileRow = {
   daily_carb_target: number | null;
   daily_fat_target: number | null;
   created_at: string;
+  display_name?: string | null;
+  night_mode?: boolean;
+  reminders?: Reminders | null;
 };
+
+export type Reminders = { meal: boolean; night: boolean; pika: boolean };
+
+export const DEFAULT_REMINDERS: Reminders = { meal: true, night: true, pika: false };
 
 export function isProfileComplete(profile: ProfileRow | null): boolean {
   if (!profile) return false;

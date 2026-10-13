@@ -2,6 +2,9 @@ export type MealEstimate = {
   food_name: string;
   /** One short sentence about what the AI sees. May be empty. */
   description?: string;
+  /** Visible items, most prominent first. Older function deploys omit it. */
+  foods?: string[];
+  vegetable_servings?: number;
   calories: number;
   protein: number;
   carbs: number;

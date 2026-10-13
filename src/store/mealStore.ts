@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import { deleteMealPhoto, purgeExpiredMealPhotos, toPhotoError, uploadMealPhoto } from '../api/mealPhotos';
 import { createMeal, deleteMeal, fetchMeals, updateMeal } from '../api/meals';
+import { toSchemaError } from '../api/profiles';
 import type { MealInput, MealInsight, MealRow } from '../types/meal';
 
 type MealState = {
@@ -23,7 +24,7 @@ function toMealError(error: unknown): string {
   if (message.toLowerCase().includes('description') && message.toLowerCase().includes('column')) {
     return 'Meal descriptions need a quick database update. Run supabase/goals-and-descriptions.sql in the SQL editor, then try again.';
   }
-  return toPhotoError(message, message);
+  return toPhotoError(toSchemaError(message), message);
 }
 
 function sortNewest(meals: MealRow[]): MealRow[] {

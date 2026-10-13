@@ -24,7 +24,7 @@ export function dayHeading(date: Date, now = new Date()): string {
   yesterday.setDate(now.getDate() - 1);
   if (isSameLocalDay(date, yesterday)) return 'Yesterday';
 
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -32,7 +32,7 @@ export function dayHeading(date: Date, now = new Date()): string {
 }
 
 export function weekdayShort(date: Date): string {
-  return date.toLocaleDateString(undefined, { weekday: 'short' });
+  return date.toLocaleDateString('en-US', { weekday: 'short' });
 }
 
 export function lastLocalDays(count: number, now = new Date()): Date[] {
@@ -61,14 +61,14 @@ export function formatMealDate(iso: string, now = new Date()): string {
   yesterday.setDate(now.getDate() - 1);
   if (isSameLocalDay(date, yesterday)) return 'Yesterday';
 
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
   });
 }
 
 export function formatMealTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, {
+  return new Date(iso).toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
   });
@@ -87,7 +87,7 @@ export function isSameLocalMonth(a: Date, b: Date): boolean {
 }
 
 export function monthHeading(date: Date): string {
-  return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
 export function weekdayLetters(): string[] {
@@ -96,7 +96,7 @@ export function weekdayLetters(): string[] {
   return Array.from({ length: 7 }, (_, index) => {
     const day = new Date(sunday);
     day.setDate(sunday.getDate() + index);
-    return day.toLocaleDateString(undefined, { weekday: 'narrow' });
+    return day.toLocaleDateString('en-US', { weekday: 'narrow' });
   });
 }
 
@@ -112,5 +112,5 @@ export function monthGrid(month: Date): Date[] {
 }
 
 export function formatWhole(value: number): string {
-  return Math.round(value).toLocaleString();
+  return Math.round(value).toLocaleString('en-US');
 }
