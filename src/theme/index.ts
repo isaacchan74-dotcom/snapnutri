@@ -9,4 +9,5 @@ export {
   type ColorTokens,
   type ThemeMode,
 } from './palettes';
+export { generateShufflePalette, isColorTokens } from './shufflePalette';
 export type { TypographyVariant } from './tokens';

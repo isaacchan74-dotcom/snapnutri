@@ -2,31 +2,47 @@ import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'r
 
 import { useThemeStore } from '../store/themeStore';
 import { applyThemeToDocument } from './applyTheme';
-import { isThemeMode, modeLabels, THEME_MODES, type ThemeMode } from './palettes';
-import { themes, type Theme } from './theme';
+import { isThemeMode, modeLabels, palettes, THEME_MODES, type ColorTokens, type ThemeMode } from './palettes';
+import { createTheme, themes, type Theme } from './theme';
 
 type ThemeContextValue = {
   theme: Theme;
   mode: ThemeMode;
   availableModes: readonly ThemeMode[];
   setMode: (mode: ThemeMode) => void;
+  reshuffle: () => void;
+  previewFor: (mode: ThemeMode) => ColorTokens;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const storedMode = useThemeStore((state) => state.mode);
+  const shufflePalette = useThemeStore((state) => state.shufflePalette);
   const setMode = useThemeStore((state) => state.setMode);
-  const mode = isThemeMode(storedMode) ? storedMode : 'volt';
-  const theme = themes[mode];
+  const reshuffle = useThemeStore((state) => state.reshuffle);
+  const mode = isThemeMode(storedMode) ? storedMode : 'light';
+  const theme = useMemo(() => {
+    if (mode === 'shuffle') {
+      return createTheme('shuffle', shufflePalette ?? palettes.shuffle);
+    }
+    return themes[mode];
+  }, [mode, shufflePalette]);
 
   useEffect(() => {
     applyThemeToDocument(theme);
   }, [theme]);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ theme, mode, availableModes: THEME_MODES, setMode }),
-    [theme, mode, setMode],
+    () => ({
+      theme,
+      mode,
+      availableModes: THEME_MODES,
+      setMode,
+      reshuffle,
+      previewFor: (next) => (next === 'shuffle' ? (shufflePalette ?? palettes.shuffle) : palettes[next]),
+    }),
+    [theme, mode, setMode, reshuffle, shufflePalette],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
@@ -45,6 +61,6 @@ export function useTheme(): Theme {
 }
 
 export function useThemeControls() {
-  const { mode, availableModes, setMode } = useThemeContext();
-  return { mode, availableModes, setMode, labels: modeLabels };
+  const { mode, availableModes, setMode, reshuffle, previewFor } = useThemeContext();
+  return { mode, availableModes, setMode, reshuffle, previewFor, labels: modeLabels };
 }

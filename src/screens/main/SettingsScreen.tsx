@@ -81,7 +81,7 @@ export function SettingsScreen() {
           <Card>
             <div className="stack stack--md">
               <AppText variant="caption" color="secondary">
-                Three high-voltage palettes. Same layout. Your pick sticks.
+                Classic Light, Dark, or hit Shuffle for a new one. Same layout. Your pick sticks.
               </AppText>
               <ThemePicker />
             </div>

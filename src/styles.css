@@ -894,9 +894,9 @@ img {
 .theme-option {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   width: 100%;
-  padding: var(--space-md);
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-md);
   border-radius: var(--radius-lg);
   border: var(--border-thick) solid var(--color-border);
   background: var(--color-surface);
@@ -906,6 +906,15 @@ img {
 .theme-option--selected {
   border-color: var(--color-primary);
   background: var(--color-primary-soft);
+}
+
+.theme-option__pick {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
 }
 
 .theme-option__swatches {
@@ -933,6 +942,22 @@ img {
   color: var(--color-primary);
   font-weight: var(--weight-bold);
   text-align: right;
+}
+
+.theme-option__shuffle {
+  width: var(--layout-button-sm);
+  height: var(--layout-button-sm);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.theme-option__shuffle-icon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
 }
 
 .chip-row {

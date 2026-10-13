@@ -60,9 +60,7 @@ export type Theme = {
   petStatus: typeof petStatus;
 };
 
-function createTheme(mode: ThemeMode): Theme {
-  const colors = palettes[mode];
-
+export function createTheme(mode: ThemeMode, colors: ColorTokens = palettes[mode]): Theme {
   return {
     mode,
     appearance: modeAppearance[mode],
@@ -85,7 +83,7 @@ function createTheme(mode: ThemeMode): Theme {
 }
 
 export const themes: Record<ThemeMode, Theme> = {
-  volt: createTheme('volt'),
-  heat: createTheme('heat'),
-  acid: createTheme('acid'),
+  light: createTheme('light'),
+  dark: createTheme('dark'),
+  shuffle: createTheme('shuffle'),
 };

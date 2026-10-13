@@ -6,7 +6,7 @@ import { applyThemeToDocument } from './theme/applyTheme';
 import { themes } from './theme/theme';
 import './styles.css';
 
-applyThemeToDocument(themes.volt);
+applyThemeToDocument(themes.light);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
