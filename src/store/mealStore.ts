@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import { deleteMealPhoto, purgeExpiredMealPhotos, toPhotoError, uploadMealPhoto } from '../api/mealPhotos';
 import { createMeal, deleteMeal, fetchMeals, updateMeal } from '../api/meals';
-import type { MealInput, MealRow } from '../types/meal';
+import type { MealInput, MealInsight, MealRow } from '../types/meal';
 
 type MealState = {
   meals: MealRow[];
@@ -12,6 +12,7 @@ type MealState = {
   add: (userId: string, input: MealInput, photoDataUrl?: string | null) => Promise<MealRow>;
   save: (id: string, input: MealInput) => Promise<MealRow>;
   remove: (id: string) => Promise<void>;
+  attachInsight: (id: string, insight: MealInsight) => void;
 };
 
 function toMealError(error: unknown): string {
@@ -87,5 +88,11 @@ export const useMealStore = create<MealState>((set, get) => ({
     } catch (error) {
       throw new Error(toMealError(error));
     }
+  },
+
+  attachInsight: (id, insight) => {
+    set({
+      meals: get().meals.map((row) => (row.id === id ? { ...row, ai_insight: insight } : row)),
+    });
   },
 }));

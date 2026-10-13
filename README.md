@@ -1,6 +1,6 @@
 # SnapNutri
 
-An AI nutrition coach for college students: photograph a meal, get a visual food journal.
+An AI-assisted food journal for college students: photograph or type a meal, get a quick AI take on it, and keep a visual journal.
 
 **Stage 1 of a staged build.** What exists today: the design system, auth, onboarding with
 personalised target calculation, and the Profile screen. Camera, AI analysis, journal, dashboard,

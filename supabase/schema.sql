@@ -80,7 +80,10 @@ create table if not exists public.meals (
   created_at timestamptz not null default now(),
   photo_path text,
   -- Existing projects: run supabase/goals-and-descriptions.sql to add this column.
-  description text check (description is null or char_length(description) <= 280)
+  description text check (description is null or char_length(description) <= 280),
+  -- One-shot AI summary + suggestions. Existing projects: run supabase/meal-insights.sql
+  -- (it also adds the trigger that keeps an insight from being replaced).
+  ai_insight jsonb
 );
 
 create index if not exists meals_user_logged_at_idx

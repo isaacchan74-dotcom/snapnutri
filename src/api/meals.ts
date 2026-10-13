@@ -1,7 +1,20 @@
 import { supabase } from '../lib/supabase';
-import type { MealInput, MealRow } from '../types/meal';
+import type { MealInput, MealInsight, MealRow } from '../types/meal';
 
 const TABLE = 'meals';
+
+export function toMealInsight(value: unknown): MealInsight | null {
+  if (!value || typeof value !== 'object') return null;
+  const row = value as Record<string, unknown>;
+  if (typeof row.summary !== 'string' || !row.summary.trim() || !Array.isArray(row.suggestions)) {
+    return null;
+  }
+  return {
+    summary: row.summary,
+    suggestions: row.suggestions.filter((item): item is string => typeof item === 'string'),
+    generated_at: typeof row.generated_at === 'string' ? row.generated_at : '',
+  };
+}
 
 function toMeal(row: Record<string, unknown>): MealRow {
   return {
@@ -16,6 +29,7 @@ function toMeal(row: Record<string, unknown>): MealRow {
     created_at: String(row.created_at),
     photo_path: typeof row.photo_path === 'string' && row.photo_path ? row.photo_path : null,
     description: typeof row.description === 'string' && row.description ? row.description : null,
+    ai_insight: toMealInsight(row.ai_insight),
   };
 }
 

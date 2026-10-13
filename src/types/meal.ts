@@ -10,6 +10,14 @@ export type MealRow = {
   created_at: string;
   photo_path: string | null;
   description: string | null;
+  ai_insight: MealInsight | null;
+};
+
+/** One-shot AI take on a logged meal. Generated once, then stored on the meal. */
+export type MealInsight = {
+  summary: string;
+  suggestions: string[];
+  generated_at: string;
 };
 
 export const MEAL_DESCRIPTION_MAX = 280;

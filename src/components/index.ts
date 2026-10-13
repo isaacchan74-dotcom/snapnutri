@@ -9,6 +9,7 @@ export { GearIcon, IconButton, PenIcon } from './IconButton';
 export { InfoRow } from './InfoRow';
 export { LoadingScreen } from './LoadingScreen';
 export { MealCard } from './MealCard';
+export { MealInsightCard } from './MealInsightCard';
 export { OptionTile } from './OptionTile';
 export { PhotoCalendar } from './PhotoCalendar';
 export { PetStatusBadge } from './PetStatusBadge';

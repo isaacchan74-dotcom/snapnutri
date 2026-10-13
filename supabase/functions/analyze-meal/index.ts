@@ -2,8 +2,7 @@ import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supa
 
 const MODEL = 'gpt-4o-mini';
 const MAX_IMAGE_CHARS = 1_800_000;
-const MAX_COACH_MESSAGE = 1_200;
-const MAX_HISTORY = 12;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const ANALYZE_PROMPT = `You are SnapNutri's meal photo analyst.
 Return ONLY JSON with this shape:
@@ -27,18 +26,20 @@ Rules:
 - description is one short plain sentence (under 140 characters) about what you see: main items and rough portion (e.g. "Chicken burrito bowl with rice, black beans, and salsa."). Only mention what is visible.
 - Do not invent drinks or sides you cannot see.`;
 
-const COACH_PROMPT = `You are SnapNutri's Coach for college students.
-Give short, punchy, useful nutrition advice using ONLY the log context you are given.
+const INSIGHT_PROMPT = `You are SnapNutri's meal reviewer for college students.
+You get ONE meal the user just logged, their goal, their daily targets, and what they have eaten that day.
+Return ONLY JSON with this shape:
+{
+  "summary": string,
+  "suggestions": [string]
+}
+
 Rules:
-- The context names the user's Goal, a Goal focus, and a Goal-priority check. Every recommendation must reflect that goal and their targets, not generic advice. Lead food suggestions with the goal's priority (for example protein first for recomposition, carbs for athletic performance, calories for a muscle-building surplus, fullness and a deficit for weight loss).
-- When you suggest a meal, name the goal in a few words so it is clear why (for example "for your recomp, ...") and include rough numbers that close today's gap on the priority macro.
-- Never invent meals, calories, or macros that are not in the log or clearly visible in an attached photo.
-- If the log is empty, say so and invite them to Snap a plate or type a meal. Still answer generally if they want ideas.
-- Use today / yesterday / last 7 days exactly as labeled in the context.
-- For dinner or "what should I eat", compare today's totals to targets and suggest a plate that fills the gap. If they already blew past a target, say so without shame and suggest a lighter close.
-- If a photo is attached, identify the food, rough portions, and how it fits today's remaining targets. This is conversational — do not pretend it was saved to the journal unless the log already has it.
-- Not medical advice. No supplements lecture. Keep replies under 160 words.
-- Talk like a sharp friend, not a textbook.`;
+- summary: 1-2 short sentences. Say what the meal is and its rough nutrition quality (for example protein-rich, carb-heavy, light on veg, high in fat, well balanced). Use the logged numbers; never invent new ones.
+- suggestions: 1 or 2 items. Each is one short, actionable sentence about the user's next choices, personalized to their goal and what is left of today's targets (for example "You still need about 60 g protein today, so make your next meal protein-first."). Include a number or name the goal when it makes the advice clearer.
+- Follow the goal's priority (protein first for recomposition, carbs for athletic performance, reaching the surplus for building muscle, staying in a deficit with filling foods for weight loss, balance and variety for general health).
+- If they are already over a target, say so plainly without shame and suggest a lighter next step.
+- Under 70 words in total. No medical advice, no supplement lectures, no emojis. Sound like a sharp friend, not a textbook.`;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -84,8 +85,8 @@ Deno.serve(async (req) => {
     return json({ error: 'Send JSON.' }, 400);
   }
 
-  if (body.mode === 'coach') {
-    return coachReply(supabase, user.id, openaiKey, body);
+  if (body.mode === 'insight') {
+    return mealInsight(supabase, user.id, openaiKey, body);
   }
 
   return analyzeMeal(openaiKey, body);
@@ -122,80 +123,49 @@ async function analyzeMeal(openaiKey: string, body: Record<string, unknown>) {
   return json(parseModelJson(completion.content), 200);
 }
 
-async function coachReply(
+/**
+ * One-shot summary + suggestions for a single logged meal.
+ * The result is stored on the meal row; later calls return the stored copy
+ * instead of calling OpenAI again, so each meal costs at most one text call.
+ */
+async function mealInsight(
   supabase: SupabaseClient,
   userId: string,
   openaiKey: string,
   body: Record<string, unknown>,
 ) {
-  const message = typeof body.message === 'string' ? body.message.trim() : '';
-  if (!message) {
-    return json({ error: 'Send a message.' }, 400);
-  }
-  if (message.length > MAX_COACH_MESSAGE) {
-    return json({ error: 'Keep it a bit shorter so I can keep up.' }, 400);
+  const mealId = typeof body.meal_id === 'string' ? body.meal_id : '';
+  if (!UUID_PATTERN.test(mealId)) {
+    return json({ error: 'Send the meal_id of a logged meal.' }, 400);
   }
 
-  const photo = typeof body.photo === 'string' && body.photo.startsWith('data:image/') ? body.photo : null;
-  if (photo && photo.length > MAX_IMAGE_CHARS) {
-    return json({ error: 'That photo is too large. Try a closer, smaller snap.' }, 413);
-  }
-
-  const localDay = typeof body.local_day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.local_day)
-    ? body.local_day
-    : utcDayKey(new Date());
   const offsetMinutes = Number(body.timezone_offset_minutes);
   const tzOffset = Number.isFinite(offsetMinutes) ? offsetMinutes : 0;
 
-  const context = await buildLogContext(supabase, userId, localDay, tzOffset);
-  const history = sanitizeHistory(body.history);
+  const { data: meal, error: mealError } = await supabase
+    .from('meals')
+    .select('id, food_name, description, calories, protein, carbs, fat, logged_at, ai_insight')
+    .eq('id', mealId)
+    .eq('user_id', userId)
+    .maybeSingle();
 
-  const userContent = photo
-    ? [
-        { type: 'text', text: message },
-        { type: 'image_url', image_url: { url: photo, detail: 'low' as const } },
-      ]
-    : message;
-
-  const completion = await completeChat(openaiKey, {
-    temperature: 0.5,
-    max_tokens: 360,
-    messages: [
-      { role: 'system', content: COACH_PROMPT },
-      { role: 'system', content: context },
-      ...history,
-      { role: 'user', content: userContent },
-    ],
-  });
-
-  if (!completion.ok) return completion.response;
-
-  const reply = completion.content.trim();
-  if (!reply) {
-    return json({ error: 'The coach came back empty. Try that again.' }, 502);
+  if (mealError) {
+    return json({ error: setupMessage(mealError.message) }, 500);
+  }
+  if (!meal) {
+    return json({ error: 'That meal is not in your journal.' }, 404);
   }
 
-  return json({ reply: reply.slice(0, 2_000) }, 200);
-}
+  const stored = readInsight(meal.ai_insight);
+  if (stored) {
+    return json(stored, 200);
+  }
 
-async function buildLogContext(
-  supabase: SupabaseClient,
-  userId: string,
-  localDay: string,
-  tzOffset: number,
-) {
-  const weekStart = shiftLocalDay(localDay, -6);
-  const rangeStart = localDayStartUtc(weekStart, tzOffset);
+  const day = localKey(meal.logged_at, tzOffset);
+  const dayStart = localDayStartUtc(day, tzOffset);
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60_000);
 
-  const loadMeals = (columns: string) =>
-    supabase
-      .from('meals')
-      .select(columns)
-      .eq('user_id', userId)
-      .gte('logged_at', rangeStart.toISOString())
-      .order('logged_at', { ascending: true });
-
-  const [profileResult, withDescription] = await Promise.all([
+  const [profileResult, dayResult] = await Promise.all([
     supabase
       .from('profiles')
       .select(
@@ -203,76 +173,136 @@ async function buildLogContext(
       )
       .eq('id', userId)
       .maybeSingle(),
-    loadMeals('food_name, description, calories, protein, carbs, fat, logged_at'),
+    supabase
+      .from('meals')
+      .select('food_name, calories, protein, carbs, fat, logged_at')
+      .eq('user_id', userId)
+      .gte('logged_at', dayStart.toISOString())
+      .lt('logged_at', dayEnd.toISOString())
+      .order('logged_at', { ascending: true }),
   ]);
 
-  // If the description column has not been added yet, fall back to the original columns.
-  const mealResult = withDescription.error
-    ? await loadMeals('food_name, calories, protein, carbs, fat, logged_at')
-    : withDescription;
+  const context = buildInsightContext(
+    meal as MealLog,
+    (dayResult.data ?? []) as MealLog[],
+    profileResult.data,
+  );
 
-  const profile = profileResult.data;
-  const meals = ((mealResult.data ?? []) as unknown) as MealLog[];
-  const yesterday = shiftLocalDay(localDay, -1);
-
-  const todayMeals = meals.filter((meal) => localKey(meal.logged_at, tzOffset) === localDay);
-  const yesterdayMeals = meals.filter((meal) => localKey(meal.logged_at, tzOffset) === yesterday);
-
-  const weekLines = Array.from({ length: 7 }, (_, index) => {
-    const key = shiftLocalDay(weekStart, index);
-    const dayMeals = meals.filter((meal) => localKey(meal.logged_at, tzOffset) === key);
-    const totals = sumMeals(dayMeals);
-    const label = key === localDay ? 'Today' : key === yesterday ? 'Yesterday' : key;
-    if (dayMeals.length === 0) return `- ${label}: no meals logged`;
-    return `- ${label}: ${dayMeals.length} meal(s) · ${Math.round(totals.calories)} kcal · P ${round1(totals.protein)} C ${round1(totals.carbs)} F ${round1(totals.fat)}`;
+  const completion = await completeChat(openaiKey, {
+    temperature: 0.4,
+    max_tokens: 220,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: INSIGHT_PROMPT },
+      { role: 'user', content: context },
+    ],
   });
 
-  const todayTotals = sumMeals(todayMeals);
-  const weekTotals = sumMeals(meals);
+  if (!completion.ok) return completion.response;
+
+  const insight = parseInsight(completion.content);
+  if (!insight) {
+    return json({ error: 'The AI came back empty on that meal. Try again.' }, 502);
+  }
+
+  const { data: saved, error: saveError } = await supabase
+    .from('meals')
+    .update({ ai_insight: insight })
+    .eq('id', mealId)
+    .is('ai_insight', null)
+    .select('ai_insight')
+    .maybeSingle();
+
+  if (saveError) {
+    return json({ error: setupMessage(saveError.message) }, 500);
+  }
+
+  // A parallel request may have stored its insight first; keep that one.
+  return json(readInsight(saved?.ai_insight) ?? insight, 200);
+}
+
+function buildInsightContext(
+  meal: MealLog,
+  dayMeals: MealLog[],
+  profile: Record<string, unknown> | null,
+): string {
   const targets = {
     calories: numberOrNull(profile?.daily_calorie_target),
     protein: numberOrNull(profile?.daily_protein_target),
     carbs: numberOrNull(profile?.daily_carb_target),
     fat: numberOrNull(profile?.daily_fat_target),
   };
-
-  const goalKey = typeof profile?.goal === 'string' ? profile.goal : '';
-  const goal = GOAL_GUIDE[goalKey];
-  const loggedDays = weekLines.filter((line) => !line.endsWith('no meals logged')).length;
+  const totals = sumMeals(dayMeals);
+  const goal = GOAL_GUIDE[typeof profile?.goal === 'string' ? profile.goal : ''];
+  const description =
+    typeof meal.description === 'string' && meal.description.trim()
+      ? meal.description.trim().slice(0, 200)
+      : 'none given';
 
   return [
-    `User local day: ${localDay}.`,
-    goal
-      ? `Goal: ${goal.label}.`
-      : 'Goal: not set. Give balanced advice and suggest they pick a goal in Profile.',
+    'JUST LOGGED:',
+    `- ${meal.food_name} (${description})`,
+    `- ${formatTotals(sumMeals([meal]))}`,
+    '',
+    goal ? `Goal: ${goal.label}.` : 'Goal: not set. Give balanced advice.',
     goal ? `Goal focus: ${goal.focus}` : '',
     goal
-      ? `Goal-priority check (${goal.priorityLabel}): ${formatPriority(goal.priority, todayTotals, targets)}.`
+      ? `Goal-priority check (${goal.priorityLabel}): ${formatPriority(goal.priority, totals, targets)}.`
       : '',
     typeof profile?.activity_level === 'string' ? `Activity level: ${profile.activity_level}.` : '',
     numberOrNull(profile?.weight) != null ? `Weight: ${numberOrNull(profile?.weight)} kg.` : '',
     `Daily targets: ${formatTargets(targets)}.`,
-    `Today remaining vs targets: ${formatRemaining(todayTotals, targets)}.`,
     '',
-    `TODAY (${localDay}):`,
-    formatMealList(todayMeals, tzOffset),
-    `Today totals: ${formatTotals(todayTotals)}.`,
-    '',
-    `YESTERDAY (${yesterday}):`,
-    formatMealList(yesterdayMeals, tzOffset),
-    '',
-    'LAST 7 DAYS:',
-    ...weekLines,
-    `Week totals: ${formatTotals(weekTotals)}.`,
-    loggedDays > 0
-      ? `Average per logged day (${loggedDays} day(s)): ${formatTotals(divideTotals(weekTotals, loggedDays))}. Compare to daily targets above.`
-      : '',
-    meals.length === 0
-      ? 'The journal is empty for this range. Do not invent any logged food.'
-      : '',
+    `THAT DAY SO FAR (${dayMeals.length} meal(s), including this one): ${formatTotals(totals)}.`,
+    `Remaining vs targets: ${formatRemaining(totals, targets)}.`,
   ]
-    .filter(Boolean)
+    .filter((line) => line !== '')
     .join('\n');
+}
+
+type MealInsight = {
+  summary: string;
+  suggestions: string[];
+  generated_at: string;
+};
+
+function parseInsight(raw: unknown): MealInsight | null {
+  let data: Record<string, unknown>;
+  try {
+    data = JSON.parse(typeof raw === 'string' ? raw : '{}') as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+
+  const summary = typeof data.summary === 'string' ? data.summary.trim().slice(0, 320) : '';
+  const suggestions = Array.isArray(data.suggestions)
+    ? data.suggestions
+        .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+        .slice(0, 2)
+        .map((item) => item.trim().slice(0, 220))
+    : [];
+
+  if (!summary || suggestions.length === 0) return null;
+  return { summary, suggestions, generated_at: new Date().toISOString() };
+}
+
+function readInsight(value: unknown): MealInsight | null {
+  if (!value || typeof value !== 'object') return null;
+  const row = value as Record<string, unknown>;
+  if (typeof row.summary !== 'string' || !Array.isArray(row.suggestions)) return null;
+  return {
+    summary: row.summary,
+    suggestions: row.suggestions.filter((item): item is string => typeof item === 'string'),
+    generated_at: typeof row.generated_at === 'string' ? row.generated_at : '',
+  };
+}
+
+function setupMessage(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes('ai_insight') || lower.includes('description')) {
+    return 'Meal insights need a quick database update. Run supabase/meal-insights.sql in the SQL editor.';
+  }
+  return message;
 }
 
 type Priority = 'calories' | 'protein' | 'carbs' | 'balanced';
@@ -341,19 +371,7 @@ type MealLog = {
 
 type Totals = { calories: number; protein: number; carbs: number; fat: number };
 
-function formatMealList(meals: MealLog[], tzOffset: number): string {
-  if (meals.length === 0) return '- none';
-  return meals
-    .map((meal) => {
-      const time = localTime(meal.logged_at, tzOffset);
-      const note =
-        typeof meal.description === 'string' && meal.description.trim()
-          ? ` (${meal.description.trim().slice(0, 140)})`
-          : '';
-      return `- ${time} ${meal.food_name}${note} · ${Math.round(Number(meal.calories) || 0)} kcal · P ${round1(meal.protein)} C ${round1(meal.carbs)} F ${round1(meal.fat)}`;
-    })
-    .join('\n');
-}
+type Targets = { calories: number | null; protein: number | null; carbs: number | null; fat: number | null };
 
 function sumMeals(meals: MealLog[]): Totals {
   return meals.reduce(
@@ -367,20 +385,7 @@ function sumMeals(meals: MealLog[]): Totals {
   );
 }
 
-function divideTotals(totals: Totals, days: number): Totals {
-  return {
-    calories: totals.calories / days,
-    protein: totals.protein / days,
-    carbs: totals.carbs / days,
-    fat: totals.fat / days,
-  };
-}
-
-function formatPriority(
-  priority: Priority,
-  today: Totals,
-  targets: { calories: number | null; protein: number | null; carbs: number | null; fat: number | null },
-): string {
+function formatPriority(priority: Priority, today: Totals, targets: Targets): string {
   const left = (current: number, target: number | null, unit: string) => {
     if (target == null) return `${unit} target unknown`;
     const gap = Math.round((target - current) * 10) / 10;
@@ -403,19 +408,11 @@ function formatTotals(totals: Totals): string {
   return `${Math.round(totals.calories)} kcal · P ${round1(totals.protein)} C ${round1(totals.carbs)} F ${round1(totals.fat)}`;
 }
 
-function formatTargets(targets: {
-  calories: number | null;
-  protein: number | null;
-  carbs: number | null;
-  fat: number | null;
-}): string {
+function formatTargets(targets: Targets): string {
   return `${targets.calories ?? '—'} kcal, ${targets.protein ?? '—'}g protein, ${targets.carbs ?? '—'}g carbs, ${targets.fat ?? '—'}g fat`;
 }
 
-function formatRemaining(
-  today: Totals,
-  targets: { calories: number | null; protein: number | null; carbs: number | null; fat: number | null },
-): string {
+function formatRemaining(today: Totals, targets: Targets): string {
   const part = (current: number, target: number | null, unit: string) => {
     if (target == null) return `${unit} unknown`;
     const left = Math.round((target - current) * 10) / 10;
@@ -428,22 +425,6 @@ function formatRemaining(
     part(today.carbs, targets.carbs, 'g carbs'),
     part(today.fat, targets.fat, 'g fat'),
   ].join(', ');
-}
-
-function sanitizeHistory(raw: unknown): { role: 'user' | 'assistant'; content: string }[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((item): item is { role: 'user' | 'assistant'; content: string } => {
-      if (!item || typeof item !== 'object') return false;
-      const row = item as { role?: unknown; content?: unknown };
-      return (row.role === 'user' || row.role === 'assistant') && typeof row.content === 'string';
-    })
-    .slice(-MAX_HISTORY)
-    .map((item) => ({
-      role: item.role,
-      content: item.content.trim().slice(0, MAX_COACH_MESSAGE),
-    }))
-    .filter((item) => item.content.length > 0);
 }
 
 async function completeChat(
@@ -471,7 +452,7 @@ async function completeChat(
           error:
             openaiResponse.status === 401
               ? 'OpenAI rejected the secret. Check OPENAI_API_KEY.'
-              : 'The coach could not answer just now.',
+              : 'The AI could not answer just now.',
         },
         502,
       ),
@@ -561,16 +542,6 @@ function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
-function utcDayKey(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-function shiftLocalDay(key: string, delta: number): string {
-  const [year, month, day] = key.split('-').map(Number);
-  const next = new Date(Date.UTC(year, month - 1, day + delta));
-  return next.toISOString().slice(0, 10);
-}
-
 function localDayStartUtc(localDay: string, tzOffsetMinutes: number): Date {
   const [year, month, day] = localDay.split('-').map(Number);
   return new Date(Date.UTC(year, month - 1, day) + tzOffsetMinutes * 60_000);
@@ -578,15 +549,6 @@ function localDayStartUtc(localDay: string, tzOffsetMinutes: number): Date {
 
 function localKey(iso: string, tzOffsetMinutes: number): string {
   return new Date(new Date(iso).getTime() - tzOffsetMinutes * 60_000).toISOString().slice(0, 10);
-}
-
-function localTime(iso: string, tzOffsetMinutes: number): string {
-  const shifted = new Date(new Date(iso).getTime() - tzOffsetMinutes * 60_000);
-  const hours = shifted.getUTCHours();
-  const minutes = String(shifted.getUTCMinutes()).padStart(2, '0');
-  const suffix = hours >= 12 ? 'PM' : 'AM';
-  const hour12 = hours % 12 || 12;
-  return `${hour12}:${minutes} ${suffix}`;
 }
 
 function json(body: unknown, status: number) {

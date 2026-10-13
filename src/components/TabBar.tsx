@@ -1,7 +1,6 @@
 import { NavLink } from 'react-router-dom';
 
 const SIDE_TABS = [
-  { to: '/coach', label: 'Coach', icon: SparkIcon },
   { to: '/journal', label: 'Journal', icon: BookIcon },
   { to: '/character', label: 'Buddy', icon: BuddyIcon },
   { to: '/profile', label: 'Profile', icon: PersonIcon },
@@ -10,8 +9,9 @@ const SIDE_TABS = [
 export function TabBar() {
   return (
     <nav className="tab-bar" aria-label="Main">
-      <SideTab tab={SIDE_TABS[0]} />
-      <SideTab tab={SIDE_TABS[1]} />
+      <div className="tab-bar__group">
+        <SideTab tab={SIDE_TABS[0]} />
+      </div>
       <NavLink
         to="/snap"
         aria-label="Snap"
@@ -21,8 +21,10 @@ export function TabBar() {
       >
         {({ isActive }) => <CameraIcon active={isActive} />}
       </NavLink>
-      <SideTab tab={SIDE_TABS[2]} />
-      <SideTab tab={SIDE_TABS[3]} />
+      <div className="tab-bar__group">
+        <SideTab tab={SIDE_TABS[1]} />
+        <SideTab tab={SIDE_TABS[2]} />
+      </div>
     </nav>
   );
 }
@@ -45,20 +47,6 @@ function SideTab({
         </>
       )}
     </NavLink>
-  );
-}
-
-function SparkIcon({ active }: { active: boolean }) {
-  return (
-    <svg className="tab-bar__icon" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M12 3.5 13.2 8.2 18 9.5 13.2 10.8 12 15.5 10.8 10.8 6 9.5 10.8 8.2 12 3.5Z"
-        stroke="currentColor"
-        strokeWidth={active ? 2.2 : 1.7}
-        strokeLinejoin="round"
-      />
-      <path d="M18.5 14.5 19.2 16.6 21.5 17.2 19.2 17.8 18.5 20 17.8 17.8 15.5 17.2 17.8 16.6 18.5 14.5Z" fill="currentColor" />
-    </svg>
   );
 }
 

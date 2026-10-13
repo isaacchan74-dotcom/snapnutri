@@ -1,14 +1,24 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import { requestMealInsight } from '../../api/mealInsight';
 import { activeMealPhotoPath, signMealPhotoUrls } from '../../api/mealPhotos';
 import { fetchMeal } from '../../api/meals';
-import { AiDisclaimer, Banner, Button, ScreenContainer, TextAreaField, TextField } from '../../components';
+import {
+  AiDisclaimer,
+  Banner,
+  Button,
+  MealCard,
+  MealInsightCard,
+  ScreenContainer,
+  TextAreaField,
+  TextField,
+} from '../../components';
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from '../../lib/dates';
 import { useAuthStore } from '../../store/authStore';
 import { useMealStore } from '../../store/mealStore';
 import type { AnalyzeMealSuccess } from '../../types/analyze';
-import { MEAL_DESCRIPTION_MAX, type MealInput, type MealRow } from '../../types/meal';
+import { MEAL_DESCRIPTION_MAX, type MealInput, type MealInsight, type MealRow } from '../../types/meal';
 
 type MealFormLocationState = {
   estimate?: AnalyzeMealSuccess;
@@ -50,8 +60,13 @@ export function MealFormScreen() {
   const add = useMealStore((state) => state.add);
   const save = useMealStore((state) => state.save);
   const remove = useMealStore((state) => state.remove);
+  const attachInsight = useMealStore((state) => state.attachInsight);
 
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [loggedMeal, setLoggedMeal] = useState<MealRow | null>(null);
+  const [insight, setInsight] = useState<MealInsight | null>(null);
+  const [insightLoading, setInsightLoading] = useState(false);
+  const [insightError, setInsightError] = useState<string | null>(null);
   const [savedMeal, setSavedMeal] = useState<MealRow | null>(null);
   const [savedPhotoUrl, setSavedPhotoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +74,12 @@ export function MealFormScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const photoPreview = incomingPhoto ?? savedPhotoUrl;
+
+  useEffect(() => {
+    setLoggedMeal(null);
+    setInsight(null);
+    setInsightError(null);
+  }, [mealId]);
 
   useEffect(() => {
     if (!mealId) {
@@ -119,6 +140,27 @@ export function MealFormScreen() {
 
   const parsed = parseForm(form);
 
+  const loadInsight = useCallback(
+    async (meal: MealRow) => {
+      setInsightError(null);
+      setInsightLoading(true);
+      try {
+        const next = await requestMealInsight(meal.id);
+        attachInsight(meal.id, next);
+        setInsight(next);
+      } catch (insightLoadError) {
+        setInsightError(
+          insightLoadError instanceof Error
+            ? insightLoadError.message
+            : 'Could not get the AI take on this meal.',
+        );
+      } finally {
+        setInsightLoading(false);
+      }
+    },
+    [attachInsight],
+  );
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!parsed.ok || !user) return;
@@ -131,10 +173,13 @@ export function MealFormScreen() {
         const description =
           parsed.input.description ?? (savedMeal?.description ? null : undefined);
         await save(mealId, { ...parsed.input, description });
+        navigate('/journal');
       } else {
-        await add(user.id, parsed.input, incomingPhoto);
+        const meal = await add(user.id, parsed.input, incomingPhoto);
+        setLoggedMeal(meal);
+        setSubmitting(false);
+        void loadInsight(meal);
       }
-      navigate('/journal');
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Could not save that meal.');
       setSubmitting(false);
@@ -155,6 +200,41 @@ export function MealFormScreen() {
       setDeleting(false);
     }
   };
+
+  if (loggedMeal) {
+    return (
+      <ScreenContainer
+        eyebrow="Logged"
+        title="Saved to your journal ✅"
+        subtitle="Here's a quick AI take on this meal."
+        footer={
+          <>
+            <Button label="Back to journal" onClick={() => navigate('/journal')} />
+            <Button
+              label="Edit this meal"
+              variant="ghost"
+              onClick={() => navigate(`/journal/${loggedMeal.id}`, { replace: true })}
+            />
+          </>
+        }
+      >
+        <div className="stack">
+          <MealCard
+            meal={loggedMeal}
+            photoUrl={incomingPhoto}
+            onOpen={() => navigate(`/journal/${loggedMeal.id}`, { replace: true })}
+          />
+          <MealInsightCard
+            insight={insight}
+            loading={insightLoading}
+            error={insightError}
+            onRetry={() => void loadInsight(loggedMeal)}
+          />
+          {fromSnap ? <AiDisclaimer /> : null}
+        </div>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer
@@ -198,6 +278,7 @@ export function MealFormScreen() {
           <Banner tone="info" message="Typed in by hand — no photo on this log." />
         ) : null}
         {fromSnap ? <AiDisclaimer /> : null}
+        {savedMeal?.ai_insight ? <MealInsightCard insight={savedMeal.ai_insight} /> : null}
 
         <TextField
           label="Food name"

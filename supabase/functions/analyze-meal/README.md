@@ -40,22 +40,20 @@ Signed-in users only (JWT required).
 { "image": "data:image/jpeg;base64,..." }
 ```
 
-**Coach** — same function, same secret. Redeploy after pulling this update.
+Snap analyze also returns a short `description` of the dish, which pre-fills the Description field on the meal form.
+
+**Meal insight** — sent once, right after a meal is saved (photo or manual).
 
 ```json
-{
-  "mode": "coach",
-  "message": "What did I eat today?",
-  "history": [{ "role": "user", "content": "..." }],
-  "photo": null,
-  "local_day": "2026-10-12",
-  "timezone_offset_minutes": 420
-}
+{ "mode": "insight", "meal_id": "uuid-of-the-saved-meal", "timezone_offset_minutes": 420 }
 ```
 
-Coach mode loads the caller's goal, activity level, weight, targets, and meals (with descriptions) from Supabase (today, yesterday, last 7 days) and tailors its advice to the goal.
+The function loads that meal, the caller's goal and targets, and that day's other meals, then asks
+`gpt-4o-mini` (text only, no image) for a short summary plus 1–2 suggestions. The result is saved
+to `meals.ai_insight`. If the meal already has one, the stored copy is returned and OpenAI is not
+called, so each meal costs at most one text call. Requires `supabase/meal-insights.sql`.
 
-Snap analyze also returns a short `description` of the dish, which pre-fills the Description field on the meal form. The OpenAI key never leaves the function. After code changes:
+There is no chat mode. The OpenAI key never leaves the function. After code changes:
 
 ```powershell
 npx supabase functions deploy analyze-meal
