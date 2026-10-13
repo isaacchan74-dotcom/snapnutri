@@ -44,8 +44,18 @@ The active mode lives in Zustand and persists to `localStorage`. Switch it from
 
 1. **BMR** — Mifflin-St Jeor: `10 × kg + 6.25 × cm − 5 × age + (male: +5 / female: −161)`
 2. **TDEE** — BMR × activity multiplier (1.2 → 1.9)
-3. **Calories** — TDEE × goal factor (lose 0.8, maintain 1.0, gain 1.12), floored at 1500 / 1200
-4. **Macros** — protein from bodyweight, fat at 27% of calories, carbs take the remainder
+3. **Calories** — TDEE × goal factor, floored at 1500 / 1200
+4. **Macros** — protein per kg of bodyweight and a fat share of calories (both set by the goal);
+   carbs take the remainder
+
+| Goal | Calories (× TDEE) | Protein (g/kg) | Fat share |
+| --- | --- | --- | --- |
+| Lose weight | 0.80 | 2.0 | 27% |
+| Maintain | 1.00 | 1.6 | 27% |
+| Gain weight / build muscle | 1.12 | 2.0 | 25% |
+| Recomposition | 0.92 | 2.3 | 25% |
+| Athletic performance | 1.08 | 1.7 | 22% (carbs run high) |
+| General health | 1.00 | 1.4 | 30% |
 
 Heights are stored in centimetres and weights in kilograms.
 

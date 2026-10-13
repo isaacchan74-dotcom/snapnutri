@@ -1,3 +1,4 @@
+export { AiDisclaimer } from './AiDisclaimer';
 export { AppText, type TextColor, type TypographyVariant } from './AppText';
 export { Banner } from './Banner';
 export { Button, type ButtonSize, type ButtonVariant } from './Button';
@@ -18,5 +19,6 @@ export { StatTile } from './StatTile';
 export { TabBar } from './TabBar';
 export { TargetProgress } from './TargetProgress';
 export { ThemePicker } from './ThemePicker';
+export { TextAreaField } from './TextAreaField';
 export { TextField } from './TextField';
 export { WeeklyCaloriesChart } from './WeeklyCaloriesChart';

@@ -3,12 +3,12 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { activeMealPhotoPath, signMealPhotoUrls } from '../../api/mealPhotos';
 import { fetchMeal } from '../../api/meals';
-import { Banner, Button, ScreenContainer, TextField } from '../../components';
+import { AiDisclaimer, Banner, Button, ScreenContainer, TextAreaField, TextField } from '../../components';
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from '../../lib/dates';
 import { useAuthStore } from '../../store/authStore';
 import { useMealStore } from '../../store/mealStore';
 import type { AnalyzeMealSuccess } from '../../types/analyze';
-import type { MealInput, MealRow } from '../../types/meal';
+import { MEAL_DESCRIPTION_MAX, type MealInput, type MealRow } from '../../types/meal';
 
 type MealFormLocationState = {
   estimate?: AnalyzeMealSuccess;
@@ -17,6 +17,7 @@ type MealFormLocationState = {
 
 type FormState = {
   foodName: string;
+  description: string;
   calories: string;
   protein: string;
   carbs: string;
@@ -26,6 +27,7 @@ type FormState = {
 
 const emptyForm = (): FormState => ({
   foodName: '',
+  description: '',
   calories: '',
   protein: '',
   carbs: '',
@@ -125,7 +127,10 @@ export function MealFormScreen() {
     setSubmitting(true);
     try {
       if (mealId) {
-        await save(mealId, parsed.input);
+        // Only send an empty description when it is clearing a stored one.
+        const description =
+          parsed.input.description ?? (savedMeal?.description ? null : undefined);
+        await save(mealId, { ...parsed.input, description });
       } else {
         await add(user.id, parsed.input, incomingPhoto);
       }
@@ -159,7 +164,7 @@ export function MealFormScreen() {
         isEditing
           ? 'Fix a typo or delete it if it was a ghost entry.'
           : fromSnap
-            ? 'These are estimates. Edit anything, then save to your journal.'
+            ? 'Edit anything, then save to your journal.'
             : 'Name it, count it, done. Date defaults to now.'
       }
       footer={
@@ -192,12 +197,7 @@ export function MealFormScreen() {
         ) : savedMeal && !savedMeal.photo_path ? (
           <Banner tone="info" message="Typed in by hand — no photo on this log." />
         ) : null}
-        {fromSnap ? (
-          <Banner
-            tone="info"
-            message={`AI guess · ~${form.calories || '—'} cal. Confirm or correct it.`}
-          />
-        ) : null}
+        {fromSnap ? <AiDisclaimer /> : null}
 
         <TextField
           label="Food name"
@@ -205,6 +205,20 @@ export function MealFormScreen() {
           onChange={(event) => setForm((current) => ({ ...current, foodName: event.target.value }))}
           placeholder="Dining hall burrito"
           autoComplete="off"
+        />
+
+        <TextAreaField
+          label="Description (optional)"
+          value={form.description}
+          onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+          placeholder="Chicken burrito bowl with rice, beans, and salsa"
+          maxLength={MEAL_DESCRIPTION_MAX}
+          rows={2}
+          helper={
+            fromSnap && estimate?.description
+              ? 'Filled in by AI from your photo. Edit it however you like.'
+              : undefined
+          }
         />
 
         <TextField
@@ -275,6 +289,7 @@ export function MealFormScreen() {
 function toFormFromEstimate(estimate: AnalyzeMealSuccess): FormState {
   return {
     foodName: estimate.food_name,
+    description: estimate.description ?? '',
     calories: String(Math.round(estimate.calories)),
     protein: String(estimate.protein),
     carbs: String(estimate.carbs),
@@ -285,6 +300,7 @@ function toFormFromEstimate(estimate: AnalyzeMealSuccess): FormState {
 
 function toForm(meal: {
   food_name: string;
+  description?: string | null;
   calories: number;
   protein: number;
   carbs: number;
@@ -293,6 +309,7 @@ function toForm(meal: {
 }): FormState {
   return {
     foodName: meal.food_name,
+    description: meal.description ?? '',
     calories: String(meal.calories),
     protein: String(meal.protein),
     carbs: String(meal.carbs),
@@ -331,6 +348,7 @@ function parseForm(form: FormState): ParsedForm {
     fieldErrors,
     input: {
       food_name: foodName,
+      description: form.description.trim().slice(0, MEAL_DESCRIPTION_MAX) || null,
       calories: Math.round(Number(form.calories)),
       protein: Number(form.protein),
       carbs: Number(form.carbs),

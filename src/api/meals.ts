@@ -15,6 +15,7 @@ function toMeal(row: Record<string, unknown>): MealRow {
     logged_at: String(row.logged_at),
     created_at: String(row.created_at),
     photo_path: typeof row.photo_path === 'string' && row.photo_path ? row.photo_path : null,
+    description: typeof row.description === 'string' && row.description ? row.description : null,
   };
 }
 
@@ -48,6 +49,7 @@ export async function createMeal(userId: string, input: MealInput): Promise<Meal
       fat: input.fat,
       logged_at: input.logged_at,
       ...(input.photo_path ? { photo_path: input.photo_path } : {}),
+      ...(input.description ? { description: input.description } : {}),
     })
     .select('*')
     .single();
@@ -66,6 +68,7 @@ export async function updateMeal(id: string, input: MealInput): Promise<MealRow>
       carbs: input.carbs,
       fat: input.fat,
       logged_at: input.logged_at,
+      ...(input.description !== undefined ? { description: input.description } : {}),
     })
     .eq('id', id)
     .select('*')

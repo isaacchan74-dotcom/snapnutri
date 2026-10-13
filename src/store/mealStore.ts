@@ -19,6 +19,9 @@ function toMealError(error: unknown): string {
   if (message.toLowerCase().includes('could not find the table')) {
     return 'The meals table is not in Supabase yet. Paste supabase/meals.sql into the SQL editor, then refresh.';
   }
+  if (message.toLowerCase().includes('description') && message.toLowerCase().includes('column')) {
+    return 'Meal descriptions need a quick database update. Run supabase/goals-and-descriptions.sql in the SQL editor, then try again.';
+  }
   return toPhotoError(message, message);
 }
 

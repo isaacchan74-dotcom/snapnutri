@@ -60,9 +60,27 @@ export const GOAL_OPTIONS: readonly Option<Goal>[] = [
   },
   {
     value: 'gain',
-    label: 'Gain weight',
+    label: 'Gain weight / build muscle',
     emoji: '📈',
-    description: 'A calorie surplus to build size and strength.',
+    description: 'A calorie surplus with high protein to build size and strength.',
+  },
+  {
+    value: 'recomp',
+    label: 'Recomposition',
+    emoji: '🔄',
+    description: 'Lose fat and gain muscle: a small deficit with very high protein.',
+  },
+  {
+    value: 'athletic',
+    label: 'Athletic performance',
+    emoji: '🏃',
+    description: 'Fuel hard training: a small surplus and plenty of carbs.',
+  },
+  {
+    value: 'health',
+    label: 'General health',
+    emoji: '🥗',
+    description: 'Eat more balanced: maintenance calories, steady protein, healthy fats.',
   },
 ];
 
@@ -82,7 +100,10 @@ export const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
 export const GOAL_LABELS: Record<Goal, string> = {
   lose: 'Lose weight',
   maintain: 'Maintain weight',
-  gain: 'Gain weight',
+  gain: 'Gain weight / build muscle',
+  recomp: 'Recomposition',
+  athletic: 'Athletic performance',
+  health: 'General health',
 };
 
 export const INPUT_LIMITS = {

@@ -19,19 +19,27 @@ export const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
   very_active: 1.9,
 };
 
-const GOAL_CALORIE_FACTOR: Record<Goal, number> = {
-  lose: 0.8,
-  maintain: 1,
-  gain: 1.12,
-};
+/**
+ * How each goal bends the targets.
+ * - calorieFactor: multiplier on TDEE (below 1 = deficit, above 1 = surplus)
+ * - proteinPerKg: grams of protein per kg of bodyweight
+ * - fatShare: share of calories from fat; carbs take whatever is left
+ */
+type GoalPlan = { calorieFactor: number; proteinPerKg: number; fatShare: number };
 
-const GOAL_PROTEIN_PER_KG: Record<Goal, number> = {
-  lose: 2.0,
-  maintain: 1.6,
-  gain: 1.8,
+export const GOAL_PLANS: Record<Goal, GoalPlan> = {
+  // Steady deficit, protein high enough to protect muscle.
+  lose: { calorieFactor: 0.8, proteinPerKg: 2.0, fatShare: 0.27 },
+  maintain: { calorieFactor: 1, proteinPerKg: 1.6, fatShare: 0.27 },
+  // Surplus with high protein to build muscle.
+  gain: { calorieFactor: 1.12, proteinPerKg: 2.0, fatShare: 0.25 },
+  // Mild deficit, the highest protein, moderate fat.
+  recomp: { calorieFactor: 0.92, proteinPerKg: 2.3, fatShare: 0.25 },
+  // Small surplus, lower fat share so carbs run high for training.
+  athletic: { calorieFactor: 1.08, proteinPerKg: 1.7, fatShare: 0.22 },
+  // Maintenance with a balanced split and a bit more fat.
+  health: { calorieFactor: 1, proteinPerKg: 1.4, fatShare: 0.3 },
 };
-
-const FAT_CALORIE_SHARE = 0.27;
 
 const MINIMUM_CALORIES: Record<Gender, number> = {
   male: 1500,
@@ -54,7 +62,7 @@ export function calculateTdee(bmr: number, activityLevel: ActivityLevel): number
 }
 
 export function calculateCalorieTarget(tdee: number, goal: Goal, gender: Gender): number {
-  return Math.max(MINIMUM_CALORIES[gender], tdee * GOAL_CALORIE_FACTOR[goal]);
+  return Math.max(MINIMUM_CALORIES[gender], tdee * GOAL_PLANS[goal].calorieFactor);
 }
 
 export function calculateMacroTargets(
@@ -62,11 +70,12 @@ export function calculateMacroTargets(
   weightKg: number,
   goal: Goal,
 ): Omit<DailyTargets, 'calories'> {
+  const plan = GOAL_PLANS[goal];
   const proteinCap = (calories * 0.4) / CALORIES_PER_GRAM.protein;
-  const protein = Math.min(weightKg * GOAL_PROTEIN_PER_KG[goal], proteinCap);
+  const protein = Math.min(weightKg * plan.proteinPerKg, proteinCap);
 
   const fatFloor = weightKg * 0.5;
-  const fat = Math.max(fatFloor, (calories * FAT_CALORIE_SHARE) / CALORIES_PER_GRAM.fat);
+  const fat = Math.max(fatFloor, (calories * plan.fatShare) / CALORIES_PER_GRAM.fat);
 
   const remainingCalories =
     calories - protein * CALORIES_PER_GRAM.protein - fat * CALORIES_PER_GRAM.fat;

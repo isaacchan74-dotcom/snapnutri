@@ -12,7 +12,8 @@ create table if not exists public.profiles (
   activity_level text check (
     activity_level in ('sedentary', 'light', 'moderate', 'active', 'very_active')
   ),
-  goal text check (goal in ('lose', 'maintain', 'gain')),
+  -- Existing projects: run supabase/goals-and-descriptions.sql to allow the newer goals.
+  goal text check (goal in ('lose', 'maintain', 'gain', 'recomp', 'athletic', 'health')),
   daily_calorie_target integer,
   daily_protein_target integer,
   daily_carb_target integer,
@@ -77,7 +78,9 @@ create table if not exists public.meals (
   fat numeric(6, 1) not null check (fat >= 0),
   logged_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
-  photo_path text
+  photo_path text,
+  -- Existing projects: run supabase/goals-and-descriptions.sql to add this column.
+  description text check (description is null or char_length(description) <= 280)
 );
 
 create index if not exists meals_user_logged_at_idx

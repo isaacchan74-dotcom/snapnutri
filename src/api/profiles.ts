@@ -46,7 +46,14 @@ export async function saveProfile({
     .select('*')
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (error.message.includes('profiles_goal_check')) {
+      throw new Error(
+        'That goal needs a quick database update. Run supabase/goals-and-descriptions.sql in the SQL editor, then try again.',
+      );
+    }
+    throw new Error(error.message);
+  }
   return data as ProfileRow;
 }
 

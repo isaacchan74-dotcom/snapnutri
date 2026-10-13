@@ -14,7 +14,7 @@ export function GoalScreen() {
     <OnboardingStep
       step={6}
       title="What are you going for?"
-      subtitle="Last one. This decides whether we go under, on, or over your burn."
+      subtitle="Last one. This sets your calories and how your protein, carbs, and fat split."
       onContinue={() => navigate('/onboarding/summary')}
       continueDisabled={goal == null}
       continueLabel="See my targets"

@@ -12,6 +12,7 @@ Return ONLY JSON with this shape:
   "reason": string or null,
   "confidence": number between 0 and 1,
   "food_name": string or null,
+  "description": string or null,
   "calories": number or null,
   "protein": number or null,
   "carbs": number or null,
@@ -23,11 +24,14 @@ Rules:
 - If you cannot identify the food with reasonable confidence (under 0.55), set needs_retake true.
 - Otherwise estimate a single meal portion for a college student. Integers for calories, one decimal for macros.
 - food_name should be short and specific (e.g. "Dining hall burrito").
+- description is one short plain sentence (under 140 characters) about what you see: main items and rough portion (e.g. "Chicken burrito bowl with rice, black beans, and salsa."). Only mention what is visible.
 - Do not invent drinks or sides you cannot see.`;
 
-const COACH_PROMPT = `You are SnapNutri's AI Coach for college students.
+const COACH_PROMPT = `You are SnapNutri's Coach for college students.
 Give short, punchy, useful nutrition advice using ONLY the log context you are given.
 Rules:
+- The context names the user's Goal, a Goal focus, and a Goal-priority check. Every recommendation must reflect that goal and their targets, not generic advice. Lead food suggestions with the goal's priority (for example protein first for recomposition, carbs for athletic performance, calories for a muscle-building surplus, fullness and a deficit for weight loss).
+- When you suggest a meal, name the goal in a few words so it is clear why (for example "for your recomp, ...") and include rough numbers that close today's gap on the priority macro.
 - Never invent meals, calories, or macros that are not in the log or clearly visible in an attached photo.
 - If the log is empty, say so and invite them to Snap a plate or type a meal. Still answer generally if they want ideas.
 - Use today / yesterday / last 7 days exactly as labeled in the context.
@@ -100,7 +104,7 @@ async function analyzeMeal(openaiKey: string, body: Record<string, unknown>) {
 
   const completion = await completeChat(openaiKey, {
     temperature: 0.2,
-    max_tokens: 280,
+    max_tokens: 360,
     response_format: { type: 'json_object' },
     messages: [
       { role: 'system', content: ANALYZE_PROMPT },
@@ -183,24 +187,32 @@ async function buildLogContext(
   const weekStart = shiftLocalDay(localDay, -6);
   const rangeStart = localDayStartUtc(weekStart, tzOffset);
 
-  const [profileResult, mealResult] = await Promise.all([
+  const loadMeals = (columns: string) =>
+    supabase
+      .from('meals')
+      .select(columns)
+      .eq('user_id', userId)
+      .gte('logged_at', rangeStart.toISOString())
+      .order('logged_at', { ascending: true });
+
+  const [profileResult, withDescription] = await Promise.all([
     supabase
       .from('profiles')
       .select(
-        'goal, daily_calorie_target, daily_protein_target, daily_carb_target, daily_fat_target',
+        'goal, activity_level, weight, daily_calorie_target, daily_protein_target, daily_carb_target, daily_fat_target',
       )
       .eq('id', userId)
       .maybeSingle(),
-    supabase
-      .from('meals')
-      .select('food_name, calories, protein, carbs, fat, logged_at')
-      .eq('user_id', userId)
-      .gte('logged_at', rangeStart.toISOString())
-      .order('logged_at', { ascending: true }),
+    loadMeals('food_name, description, calories, protein, carbs, fat, logged_at'),
   ]);
 
+  // If the description column has not been added yet, fall back to the original columns.
+  const mealResult = withDescription.error
+    ? await loadMeals('food_name, calories, protein, carbs, fat, logged_at')
+    : withDescription;
+
   const profile = profileResult.data;
-  const meals = (mealResult.data ?? []) as MealLog[];
+  const meals = ((mealResult.data ?? []) as unknown) as MealLog[];
   const yesterday = shiftLocalDay(localDay, -1);
 
   const todayMeals = meals.filter((meal) => localKey(meal.logged_at, tzOffset) === localDay);
@@ -224,9 +236,21 @@ async function buildLogContext(
     fat: numberOrNull(profile?.daily_fat_target),
   };
 
+  const goalKey = typeof profile?.goal === 'string' ? profile.goal : '';
+  const goal = GOAL_GUIDE[goalKey];
+  const loggedDays = weekLines.filter((line) => !line.endsWith('no meals logged')).length;
+
   return [
     `User local day: ${localDay}.`,
-    `Goal: ${typeof profile?.goal === 'string' ? profile.goal : 'unknown'}.`,
+    goal
+      ? `Goal: ${goal.label}.`
+      : 'Goal: not set. Give balanced advice and suggest they pick a goal in Profile.',
+    goal ? `Goal focus: ${goal.focus}` : '',
+    goal
+      ? `Goal-priority check (${goal.priorityLabel}): ${formatPriority(goal.priority, todayTotals, targets)}.`
+      : '',
+    typeof profile?.activity_level === 'string' ? `Activity level: ${profile.activity_level}.` : '',
+    numberOrNull(profile?.weight) != null ? `Weight: ${numberOrNull(profile?.weight)} kg.` : '',
     `Daily targets: ${formatTargets(targets)}.`,
     `Today remaining vs targets: ${formatRemaining(todayTotals, targets)}.`,
     '',
@@ -240,6 +264,9 @@ async function buildLogContext(
     'LAST 7 DAYS:',
     ...weekLines,
     `Week totals: ${formatTotals(weekTotals)}.`,
+    loggedDays > 0
+      ? `Average per logged day (${loggedDays} day(s)): ${formatTotals(divideTotals(weekTotals, loggedDays))}. Compare to daily targets above.`
+      : '',
     meals.length === 0
       ? 'The journal is empty for this range. Do not invent any logged food.'
       : '',
@@ -248,8 +275,63 @@ async function buildLogContext(
     .join('\n');
 }
 
+type Priority = 'calories' | 'protein' | 'carbs' | 'balanced';
+
+type GoalGuide = {
+  label: string;
+  focus: string;
+  priority: Priority;
+  priorityLabel: string;
+};
+
+// Keep in step with GOAL_PLANS in src/lib/nutrition.ts.
+const GOAL_GUIDE: Record<string, GoalGuide> = {
+  lose: {
+    label: 'Lose weight (steady deficit)',
+    focus:
+      'Stay at or just under the calorie target without crash dieting. Keep protein high to protect muscle. Favor filling, high-volume foods.',
+    priority: 'calories',
+    priorityLabel: 'stay at or under calories, protein high',
+  },
+  maintain: {
+    label: 'Maintain weight',
+    focus: 'Land close to the calorie target with steady protein. Consistency beats perfection.',
+    priority: 'calories',
+    priorityLabel: 'land near calories',
+  },
+  gain: {
+    label: 'Gain weight / build muscle (calorie surplus)',
+    focus:
+      'Hit the calorie target (under-eating is the usual miss) and high protein. Suggest easy calorie-dense additions.',
+    priority: 'calories',
+    priorityLabel: 'reach the surplus calories, protein high',
+  },
+  recomp: {
+    label: 'Recomposition (lose fat and gain muscle)',
+    focus:
+      'Protein first at every meal. Keep calories near or slightly under target and do not under-eat on training days.',
+    priority: 'protein',
+    priorityLabel: 'protein first',
+  },
+  athletic: {
+    label: 'Athletic performance / high activity',
+    focus:
+      'Carbs are the fuel: hit the carb target and time carbs around training. Protein supports recovery. Do not cut calories.',
+    priority: 'carbs',
+    priorityLabel: 'carbs first',
+  },
+  health: {
+    label: 'General health / eat more balanced',
+    focus:
+      'Aim for variety, fiber, fruit and veg, and a balanced macro split. No obsessing over exact numbers.',
+    priority: 'balanced',
+    priorityLabel: 'balance and variety',
+  },
+};
+
 type MealLog = {
   food_name: string;
+  description?: string | null;
   calories: number;
   protein: number;
   carbs: number;
@@ -264,7 +346,11 @@ function formatMealList(meals: MealLog[], tzOffset: number): string {
   return meals
     .map((meal) => {
       const time = localTime(meal.logged_at, tzOffset);
-      return `- ${time} ${meal.food_name} · ${Math.round(Number(meal.calories) || 0)} kcal · P ${round1(meal.protein)} C ${round1(meal.carbs)} F ${round1(meal.fat)}`;
+      const note =
+        typeof meal.description === 'string' && meal.description.trim()
+          ? ` (${meal.description.trim().slice(0, 140)})`
+          : '';
+      return `- ${time} ${meal.food_name}${note} · ${Math.round(Number(meal.calories) || 0)} kcal · P ${round1(meal.protein)} C ${round1(meal.carbs)} F ${round1(meal.fat)}`;
     })
     .join('\n');
 }
@@ -279,6 +365,38 @@ function sumMeals(meals: MealLog[]): Totals {
     }),
     { calories: 0, protein: 0, carbs: 0, fat: 0 },
   );
+}
+
+function divideTotals(totals: Totals, days: number): Totals {
+  return {
+    calories: totals.calories / days,
+    protein: totals.protein / days,
+    carbs: totals.carbs / days,
+    fat: totals.fat / days,
+  };
+}
+
+function formatPriority(
+  priority: Priority,
+  today: Totals,
+  targets: { calories: number | null; protein: number | null; carbs: number | null; fat: number | null },
+): string {
+  const left = (current: number, target: number | null, unit: string) => {
+    if (target == null) return `${unit} target unknown`;
+    const gap = Math.round((target - current) * 10) / 10;
+    return gap >= 0 ? `${gap}${unit} still to go today` : `${Math.abs(gap)}${unit} over target today`;
+  };
+
+  switch (priority) {
+    case 'protein':
+      return left(today.protein, targets.protein, 'g protein');
+    case 'carbs':
+      return left(today.carbs, targets.carbs, 'g carbs');
+    case 'calories':
+      return `${left(today.calories, targets.calories, ' kcal')}; ${left(today.protein, targets.protein, 'g protein')}`;
+    default:
+      return `${left(today.calories, targets.calories, ' kcal')}; aim for a balanced mix, not one macro`;
+  }
 }
 
 function formatTotals(totals: Totals): string {
@@ -394,6 +512,8 @@ function parseModelJson(raw: unknown) {
     reason: null,
     confidence,
     food_name: String(data.food_name).trim().slice(0, 80),
+    description:
+      typeof data.description === 'string' ? data.description.trim().slice(0, 200) : '',
     calories: wholeNumber(data.calories),
     protein: macroNumber(data.protein),
     carbs: macroNumber(data.carbs),
@@ -407,6 +527,7 @@ function retake(reason: string, confidence = 0) {
     reason,
     confidence,
     food_name: null,
+    description: null,
     calories: null,
     protein: null,
     carbs: null,

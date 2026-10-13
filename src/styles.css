@@ -448,6 +448,19 @@ img {
   border-color: var(--color-danger);
 }
 
+.field__control--multiline {
+  height: auto;
+  align-items: flex-start;
+  padding: var(--space-md) var(--space-lg);
+}
+
+.field__input--textarea {
+  min-height: calc(var(--space-xl) * 2);
+  resize: vertical;
+  line-height: 1.4;
+  font-family: inherit;
+}
+
 .field__input {
   flex: 1;
   min-width: 0;
@@ -758,6 +771,27 @@ img {
 .banner--info {
   border-color: var(--color-primary);
   background: var(--color-primary-soft);
+}
+
+.ai-note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: var(--border-hairline) dashed var(--color-border-strong);
+  background: var(--color-surface-muted);
+}
+
+.ai-note__badge {
+  flex-shrink: 0;
+  padding: var(--space-xxs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-wide);
 }
 
 .banner--success {

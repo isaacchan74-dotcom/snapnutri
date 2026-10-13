@@ -9,7 +9,10 @@ export type MealRow = {
   logged_at: string;
   created_at: string;
   photo_path: string | null;
+  description: string | null;
 };
+
+export const MEAL_DESCRIPTION_MAX = 280;
 
 export type MealInput = {
   food_name: string;
@@ -19,6 +22,8 @@ export type MealInput = {
   fat: number;
   logged_at: string;
   photo_path?: string | null;
+  /** `null` clears it; `undefined` leaves the stored value alone. */
+  description?: string | null;
 };
 
 export type MealTotals = {

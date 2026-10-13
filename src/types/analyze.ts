@@ -1,5 +1,7 @@
 export type MealEstimate = {
   food_name: string;
+  /** One short sentence about what the AI sees. May be empty. */
+  description?: string;
   calories: number;
   protein: number;
   carbs: number;
@@ -16,6 +18,7 @@ export type AnalyzeMealRetake = {
   needs_retake: true;
   reason: string;
   food_name: null;
+  description?: null;
   calories: null;
   protein: null;
   carbs: null;

@@ -1,7 +1,7 @@
 import { useEffect, useRef, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { AppText, Banner, Button, ScreenContainer } from '../../components';
+import { AiDisclaimer, AppText, Banner, Button, ScreenContainer } from '../../components';
 import { useAuthStore } from '../../store/authStore';
 import { useCoachStore } from '../../store/coachStore';
 import type { CoachMessage } from '../../types/coach';
@@ -50,6 +50,7 @@ export function CoachScreen() {
   };
 
   const showStarters = messages.length <= 1 && !sending;
+  const hasPhoto = messages.some((message) => Boolean(message.photo));
 
   return (
     <ScreenContainer
@@ -57,20 +58,25 @@ export function CoachScreen() {
       title="In the huddle"
       subtitle="Your real log. Straight talk."
       footer={
-        <form className="coach-compose" onSubmit={handleSubmit}>
-          <input
-            ref={inputRef}
-            className="coach-compose__input"
-            type="text"
-            name="message"
-            placeholder="Ask about today, this week, dinner…"
-            autoComplete="off"
-            disabled={sending}
-            maxLength={1200}
-            aria-label="Message the coach"
-          />
-          <Button label="Send" type="submit" size="sm" fullWidth={false} loading={sending} />
-        </form>
+        <>
+          {hasPhoto ? (
+            <AiDisclaimer message="Calorie and macro numbers from a photo are AI estimates and can be off. Double-check them." />
+          ) : null}
+          <form className="coach-compose" onSubmit={handleSubmit}>
+            <input
+              ref={inputRef}
+              className="coach-compose__input"
+              type="text"
+              name="message"
+              placeholder="Ask about today, this week, dinner…"
+              autoComplete="off"
+              disabled={sending}
+              maxLength={1200}
+              aria-label="Message the coach"
+            />
+            <Button label="Send" type="submit" size="sm" fullWidth={false} loading={sending} />
+          </form>
+        </>
       }
     >
       <div className="coach">

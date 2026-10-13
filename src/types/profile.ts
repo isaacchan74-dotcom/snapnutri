@@ -2,7 +2,7 @@ export type Gender = 'male' | 'female';
 
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
 
-export type Goal = 'lose' | 'maintain' | 'gain';
+export type Goal = 'lose' | 'maintain' | 'gain' | 'recomp' | 'athletic' | 'health';
 
 /** The measurements the user gives us during onboarding. Always stored metric. */
 export type ProfileMeasurements = {

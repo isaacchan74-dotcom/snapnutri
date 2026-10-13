@@ -53,7 +53,9 @@ Signed-in users only (JWT required).
 }
 ```
 
-Coach mode loads the caller's meals and targets from Supabase (today, yesterday, last 7 days). The OpenAI key never leaves the function. After code changes:
+Coach mode loads the caller's goal, activity level, weight, targets, and meals (with descriptions) from Supabase (today, yesterday, last 7 days) and tailors its advice to the goal.
+
+Snap analyze also returns a short `description` of the dish, which pre-fills the Description field on the meal form. The OpenAI key never leaves the function. After code changes:
 
 ```powershell
 npx supabase functions deploy analyze-meal
