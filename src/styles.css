@@ -315,3 +315,22 @@ img{max-width:100%}
 .focus.insight p{color:var(--ink);font-size:13px;line-height:1.6;margin-top:6px}
 .insight-tips{margin:10px 0 0;padding-left:18px;display:grid;gap:6px}
 .insight-tips li{font-size:12px;color:var(--muted);line-height:1.55}
+
+/* Late-night mood: re-resolve text colour inside the frame (body keeps the daytime ink),
+   and give the prototype's hard-coded daytime colours a night counterpart. */
+.phone{color:var(--ink)}
+.night{--accent:#cf9466}
+.night .btn,.night .snapnav .cam,.night .bubble.me{color:#fffdf8}
+.night .btn.secondary{color:var(--ink)}
+.night .btn.quiet{color:var(--muted)}
+.night .chip{background:#485043;color:#cddbc2}
+.night .chip.amber{background:#5a4a38;color:#ecc99a}
+.night .reward{border-color:#5b6653}
+.night .reward p{color:#cddbc2}
+.night .toast{background:#f4ede4;color:#2e2925}
+.night .day.selected{background:#5c4b3d}
+.night .day.empty{border-color:#60514670}
+.night .day .count{color:#2e2925}
+.night .error,.night .danger-text{color:#eba493}
+.night .extras button{background:#3a322c;color:var(--muted)}
+.night .field{color-scheme:dark}
