@@ -95,12 +95,12 @@ function NameStep() {
   const name = useOnboardingStore((state) => state.name);
   const update = useOnboardingStore((state) => state.update);
   return (
-    <Step step="name" title="What should Pika call you?" sub="Just a first name or a nickname." canContinue={name.trim().length > 0}>
+    <Step step="name" title="What should we call you?" sub="Just a first name or a nickname." canContinue={name.trim().length > 0}>
       <input
         className="field"
         autoFocus
         maxLength={30}
-        placeholder="e.g. Shirly"
+        placeholder="e.g. Alex"
         value={name}
         onChange={(event) => update({ name: event.target.value })}
       />

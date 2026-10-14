@@ -57,7 +57,7 @@ export function EditProfilePage() {
       <BackHead title="Your details" sub="Targets update when you save." to="/profile" />
       <div className="stack">
         <label>
-          <span className="formlabel">What Pika calls you</span>
+          <span className="formlabel">Nickname</span>
           <input className="field" maxLength={30} value={name} onChange={(event) => setName(event.target.value)} />
         </label>
         <div className="formrow">
