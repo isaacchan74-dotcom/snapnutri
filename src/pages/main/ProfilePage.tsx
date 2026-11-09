@@ -131,7 +131,7 @@ export function ProfilePage() {
             navigate('/home');
           }}
         >
-          <span>Replay the tour</span>
+          <span>Tutorial</span>
           <span>›</span>
         </button>
         <div className="settings-row">
