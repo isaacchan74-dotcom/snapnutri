@@ -3,6 +3,7 @@ import { create } from 'zustand';
 
 import { loadCharacter } from '../api/characters';
 import { fetchProfile } from '../api/profiles';
+import { clearPendingEmail, friendlyAuthError } from '../lib/authRedirect';
 import { isSupabaseConfigured } from '../lib/env';
 import { supabase } from '../lib/supabase';
 import type { CharacterRow } from '../types/character';
@@ -72,6 +73,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
 
+      clearPendingEmail();
       set({ profileLoading: true, characterLoading: true });
       try {
         const [profile, characterResult] = await Promise.all([
@@ -128,14 +130,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
-      // Confirmation links return to whichever deployment the user signed up on.
+      // Confirmation links (when that setting is on) return here so the client can pick up the session.
       options: { emailRedirectTo: `${window.location.origin}/login` },
     });
 
-    return {
-      error: error ? error.message : null,
-      needsEmailConfirmation: !error && data.session == null,
-    };
+    if (error) return { error: friendlyAuthError(error.message), needsEmailConfirmation: false };
+
+    const identities = data.user?.identities;
+    if (data.user && identities && identities.length === 0) {
+      return {
+        error: 'That email already has a journal. Try logging in.',
+        needsEmailConfirmation: false,
+      };
+    }
+
+    // Confirm-email ON: no session until they click the link. OFF: session is created now.
+    return { error: null, needsEmailConfirmation: data.session == null };
   },
 
   signIn: async (email, password) => {
@@ -143,7 +153,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       email: email.trim().toLowerCase(),
       password,
     });
-    return { error: error ? error.message : null };
+    return { error: error ? friendlyAuthError(error.message) : null };
   },
 
   signOut: async () => {
