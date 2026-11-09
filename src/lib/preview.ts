@@ -51,6 +51,6 @@ export function isMissingSchema(message: string): boolean {
   const lower = message.toLowerCase();
   return (
     (lower.includes('column') || lower.includes('could not find') || lower.includes('does not exist') || lower.includes('schema cache')) &&
-    /display_name|night_mode|reminders|meal_type|foods|portion|shared_with|vegetable_servings|reviewed|pet_progress/.test(lower)
+    /display_name|night_mode|reminders|tutorial_completed|meal_type|foods|portion|shared_with|vegetable_servings|reviewed|pet_progress/.test(lower)
   );
 }

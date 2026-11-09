@@ -41,6 +41,7 @@ export type ProfileRow = {
   display_name?: string | null;
   night_mode?: boolean;
   reminders?: Reminders | null;
+  tutorial_completed?: boolean;
 };
 
 export type Reminders = { meal: boolean; night: boolean; pika: boolean };

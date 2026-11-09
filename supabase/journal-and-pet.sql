@@ -11,6 +11,8 @@ alter table public.profiles
 alter table public.profiles add column if not exists night_mode boolean not null default false;
 alter table public.profiles
   add column if not exists reminders jsonb not null default '{"meal": true, "night": true, "pika": false}'::jsonb;
+alter table public.profiles
+  add column if not exists tutorial_completed boolean not null default true;
 
 -- Meal details from the Review screen.
 alter table public.meals add column if not exists meal_type text;

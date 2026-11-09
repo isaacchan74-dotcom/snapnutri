@@ -171,6 +171,11 @@ function OnboardingPage() {
       } catch {
         // The name column arrives with journal-and-pet.sql; Home falls back to the email.
       }
+      try {
+        profile = await updateProfilePrefs(user.id, { tutorial_completed: false });
+      } catch {
+        // tutorial.sql adds the column; preview storage still flags a first-run tour.
+      }
       reset();
       setProfile(profile);
     } catch (saveError) {

@@ -17,6 +17,7 @@ export function ProfilePage() {
   const openModal = useUiStore((state) => state.openModal);
   const closeModal = useUiStore((state) => state.closeModal);
   const showToast = useUiStore((state) => state.showToast);
+  const startTour = useUiStore((state) => state.startTour);
   const name = displayName(profile, user?.email);
   const reminders: Reminders = { ...DEFAULT_REMINDERS, ...(profile?.reminders ?? {}) };
 
@@ -122,6 +123,16 @@ export function ProfilePage() {
         >
           <span>Late-night mood</span>
           <span className={`toggle ${profile?.night_mode ? 'on' : ''}`} />
+        </button>
+        <button
+          className="settings-row"
+          onClick={() => {
+            startTour();
+            navigate('/home');
+          }}
+        >
+          <span>Replay the tour</span>
+          <span>›</span>
         </button>
         <div className="settings-row">
           <span>Signed in as</span>

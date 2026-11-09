@@ -346,3 +346,19 @@ img{max-width:100%}
 .night .error,.night .danger-text{color:#eba493}
 .night .extras button{background:#3a322c;color:var(--muted)}
 .night .field{color-scheme:dark}
+
+/* First-run tour: a spotlight hole + a paper bubble. */
+.tour{position:absolute;inset:0;z-index:40;pointer-events:auto}
+.tour--waiting{background:#2e2925b8}
+.tour-hole{position:absolute;box-shadow:0 0 0 200vmax #2e2925b8;border:3px solid var(--accent);pointer-events:none;transition:top .22s ease,left .22s ease,width .22s ease,height .22s ease}
+.tour-bubble{position:absolute;width:min(280px,calc(100% - 40px));background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:16px 16px 14px;box-shadow:0 10px 28px #2e292540;z-index:41}
+.tour-bubble h2{font-size:22px;margin:0 0 6px}
+.tour-bubble>p{font-size:13px;color:var(--muted);line-height:1.55}
+.tour-step{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.tour-actions{display:flex;align-items:center;gap:10px;margin-top:14px}
+.tour-actions .btn{flex:1;min-height:44px}
+.tour-skip{font-size:13px;font-weight:600;color:var(--muted);padding:8px 6px;flex:none}
+.tour-bubble--above:after,.tour-bubble--below:after{content:'';position:absolute;width:12px;height:12px;background:var(--paper);border:1px solid var(--line);transform:rotate(45deg)}
+.tour-bubble--above:after{bottom:-7px;left:50%;margin-left:-6px;border-top:0;border-left:0}
+.tour-bubble--below:after{top:-7px;left:50%;margin-left:-6px;border-bottom:0;border-right:0}
+.night .tour-hole{box-shadow:0 0 0 200vmax #1a1613cc}

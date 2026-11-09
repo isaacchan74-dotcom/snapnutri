@@ -18,7 +18,9 @@ create table if not exists public.profiles (
   daily_protein_target integer,
   daily_carb_target integer,
   daily_fat_target integer,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Existing projects: run supabase/tutorial.sql. Default true so older accounts skip the tour.
+  tutorial_completed boolean not null default true
 );
 
 -- Row level security: a user can only ever touch their own row.

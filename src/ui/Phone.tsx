@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore';
 import { Icon, type IconName } from './Icon';
 import { ModalHost, ToastHost } from './Overlays';
 import { PIKA_HAPPY } from './Pika';
+import { TutorialHost } from './Tutorial';
 
 const TABS: { to: string; label: IconName; match: string[] }[] = [
   { to: '/home', label: 'Home', match: ['/home', '/pet', '/coach'] },
@@ -49,6 +50,17 @@ export function Phone({ children, nav = false }: PhoneProps) {
                 to={tab.to}
                 aria-label={tab.label}
                 aria-current={active ? 'page' : undefined}
+                data-tour={
+                  tab.label === 'Snap'
+                    ? 'snap'
+                    : tab.label === 'Journal'
+                      ? 'journal'
+                      : tab.label === 'Home'
+                        ? 'buddy'
+                        : tab.label === 'Profile'
+                          ? 'profile'
+                          : undefined
+                }
                 className={`${snap ? 'snapnav' : ''} ${active ? 'active' : ''}`}
               >
                 {snap ? (
@@ -72,6 +84,7 @@ export function Phone({ children, nav = false }: PhoneProps) {
           </span>
         </button>
       ) : null}
+      <TutorialHost />
       <ModalHost />
       <ToastHost />
     </div>

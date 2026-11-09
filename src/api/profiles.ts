@@ -14,8 +14,20 @@ export async function fetchProfile(userId: string): Promise<ProfileRow | null> {
 
 /** Before the migration, name and preferences come from the browser. */
 function withPreviewPrefs(row: ProfileRow): ProfileRow {
-  if ('night_mode' in row) return row;
-  return { ...row, ...(previewGet('profiles', row.id) ?? {}) } as ProfileRow;
+  const preview = previewGet('profiles', row.id);
+  if (!preview) return row;
+  return {
+    ...row,
+    display_name: row.display_name ?? (preview.display_name as string | null | undefined),
+    night_mode: 'night_mode' in row ? row.night_mode : Boolean(preview.night_mode),
+    reminders: row.reminders ?? (preview.reminders as ProfileRow['reminders']),
+    tutorial_completed:
+      'tutorial_completed' in row
+        ? row.tutorial_completed
+        : 'tutorial_completed' in preview
+          ? Boolean(preview.tutorial_completed)
+          : undefined,
+  };
 }
 
 type SaveProfileInput = {
@@ -67,7 +79,7 @@ export async function saveProfile({
 /** Name and Profile-tab preferences. Needs supabase/journal-and-pet.sql. */
 export async function updateProfilePrefs(
   userId: string,
-  patch: Partial<Pick<ProfileRow, 'display_name' | 'night_mode' | 'reminders'>>,
+  patch: Partial<Pick<ProfileRow, 'display_name' | 'night_mode' | 'reminders' | 'tutorial_completed'>>,
 ): Promise<ProfileRow> {
   const { data, error } = await supabase.from(TABLE).update(patch).eq('id', userId).select('*').single();
 
@@ -85,9 +97,9 @@ export function toSchemaError(message: string): string {
   const lower = message.toLowerCase();
   if (
     (lower.includes('column') || lower.includes('could not find')) &&
-    /display_name|night_mode|reminders|meal_type|foods|portion|shared_with|vegetable_servings|reviewed|pet_progress/.test(lower)
+    /display_name|night_mode|reminders|tutorial_completed|meal_type|foods|portion|shared_with|vegetable_servings|reviewed|pet_progress/.test(lower)
   ) {
-    return 'The database needs a quick update. Run supabase/journal-and-pet.sql in the Supabase SQL editor, then refresh.';
+    return 'The database needs a quick update. Run supabase/tutorial.sql (or journal-and-pet.sql) in the Supabase SQL editor, then refresh.';
   }
   return message;
 }
