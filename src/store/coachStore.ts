@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { askCoach } from '../api/coach';
+import { askCoach, CoachGuardError } from '../api/coach';
 import type { CoachMessage } from '../types/coach';
 
 const WELCOME: CoachMessage = {
@@ -60,6 +60,17 @@ export const useCoachStore = create<CoachState>((set, get) => ({
         sending: false,
       });
     } catch (error) {
+      if (error instanceof CoachGuardError) {
+        set({
+          messages: [
+            ...get().messages,
+            { id: crypto.randomUUID(), role: 'assistant', text: error.message },
+          ],
+          sending: false,
+          error: null,
+        });
+        return;
+      }
       set({
         sending: false,
         error: error instanceof Error ? error.message : 'Could not reach the coach.',

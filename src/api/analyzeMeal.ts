@@ -35,5 +35,8 @@ function friendlyInvokeError(message: string): string {
   if (lower.includes('openai') || lower.includes('api key') || lower.includes('401')) {
     return 'The OpenAI secret is missing on Supabase. Set OPENAI_API_KEY, then try again.';
   }
+  if (lower.includes("today's ai limit") || lower.includes('come back tomorrow')) {
+    return "You've reached today's AI limit — come back tomorrow";
+  }
   return message || 'Could not analyze that photo.';
 }

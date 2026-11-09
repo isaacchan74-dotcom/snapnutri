@@ -5,8 +5,11 @@ const MAX_IMAGE_CHARS = 1_800_000;
 const MAX_COACH_MESSAGE = 1_200;
 const MAX_HISTORY = 12;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-// Keep in step with public.ai_daily_limit in supabase/ai-usage-limits.sql.
-const DAILY_LIMITS = { snap: 20, coach: 40 } as const;
+// Keep in step with public.ai_daily_limit / ai_daily_char_limit in supabase/ai-usage-limits.sql.
+const DAILY_LIMITS = { snap: 20, coach: 20 } as const;
+const DAILY_CHAR_LIMITS = { snap: 0, coach: 2_000 } as const;
+const QUOTA_MESSAGE = "You've reached today's AI limit — come back tomorrow";
+const SAFETY_MESSAGE = 'I only help with nutrition and fitness. Try a question about meals, goals, or how your day looks.';
 
 const ANALYZE_PROMPT = `You are SnapNutri's meal photo analyst.
 Return ONLY JSON with this shape:
@@ -123,24 +126,53 @@ Deno.serve(async (req) => {
   return analyzeMeal(supabase, openaiKey, body);
 });
 
-/** Counts one AI call against the user's daily quota. Returns a 429 response once it is used up. */
-async function quotaExceeded(supabase: SupabaseClient, kind: keyof typeof DAILY_LIMITS): Promise<Response | null> {
-  const { data, error } = await supabase.rpc('consume_ai_quota', { p_kind: kind });
+/** Counts one AI call (and optional input characters) against the user's daily quota. */
+async function quotaExceeded(
+  supabase: SupabaseClient,
+  kind: keyof typeof DAILY_LIMITS,
+  chars = 0,
+): Promise<Response | null> {
+  const { data, error } = await supabase.rpc('consume_ai_quota', { p_kind: kind, p_chars: chars });
   if (error) {
     // Quota table not installed yet: allow the call rather than break the app.
     console.error('consume_ai_quota failed:', error.message);
     return null;
   }
   if (data !== false) return null;
-  return json(
-    {
-      error:
-        kind === 'snap'
-          ? `Pika needs a rest — you've used today's ${DAILY_LIMITS.snap} photo checks. Come back tomorrow, or add this meal manually.`
-          : `Pika needs a rest — that's ${DAILY_LIMITS.coach} questions today. Let's talk again tomorrow.`,
-    },
-    429,
-  );
+  return json({ error: QUOTA_MESSAGE, code: 'quota' }, 429);
+}
+
+/**
+ * Lenient pre-check for the chatbox. Blocks only clear harm or obvious off-topic misuse.
+ * When unsure, allow — normal food, nutrition, and fitness questions must pass.
+ */
+function isBlockedChatInput(text: string): boolean {
+  const lower = text.toLowerCase();
+
+  const hardHarm =
+    /\b(child\s*porn|csam|child\s*sexual)\b/.test(lower) ||
+    /\b(make|build|assemble|craft)\b[\s\S]{0,32}\b(bomb|explosive|ied|pipe\s*bomb|napalm)\b/.test(lower) ||
+    /\bhow\s+to\s+(kill|murder)\b/.test(lower) ||
+    /\b(suicide\s+(method|methods|pact)|kill(?:ing)?\s+myself)\b/.test(lower) ||
+    /\b(make|cook|synthesize)\b[\s\S]{0,24}\b(meth|fentanyl|ricin|sarin)\b/.test(lower) ||
+    /\b(ransomware|sql\s*injection\s+payload|zero[\s-]?day\s+exploit)\b/.test(lower) ||
+    /\bhack(?:ing)?\s+(into|someone|an?\s+account)\b/.test(lower);
+
+  if (hardHarm) return true;
+
+  const foodOrFitness =
+    /\b(food|meal|eat|ate|eats|eating|diet|hunger|hungry|calorie|calories|kcal|protein|carb|carbs|macro|macros|nutrition|nutrient|weight|weigh|gym|workout|workouts|exercise|fitness|snack|breakfast|lunch|dinner|recipe|recipes|plate|pika|journal|vitamin|fiber|sugar|keto|vegan|vegetarian|muscle|bulk|cut|recomp|fasting|portion|serving|cardio|bmi|tdee|bmr|hydrate|steps|running|lifting)\b/.test(
+      lower,
+    );
+  if (foodOrFitness) return false;
+
+  const offTopicMisuse =
+    /\bignore\s+(all\s+)?(previous|prior|above)\s+(instructions|prompts)\b/.test(lower) ||
+    /\byou\s+are\s+now\s+dan\b/.test(lower) ||
+    /\bwrite\s+(my|an|a)\s+(essay|term\s+paper|dissertation|book\s+report)\b/.test(lower) ||
+    /\b(malware|ransomware|keylogger)\b/.test(lower);
+
+  return offTopicMisuse;
 }
 
 async function analyzeMeal(supabase: SupabaseClient, openaiKey: string, body: Record<string, unknown>) {
@@ -154,7 +186,7 @@ async function analyzeMeal(supabase: SupabaseClient, openaiKey: string, body: Re
     return json({ error: 'That photo is too large. Try a closer, smaller snap.' }, 413);
   }
 
-  const limited = await quotaExceeded(supabase, 'snap');
+  const limited = await quotaExceeded(supabase, 'snap', 0);
   if (limited) return limited;
 
   const completion = await completeChat(openaiKey, {
@@ -191,6 +223,10 @@ async function coachReply(
     return json({ error: 'Keep it a bit shorter so I can keep up.' }, 400);
   }
 
+  if (isBlockedChatInput(message)) {
+    return json({ error: SAFETY_MESSAGE, code: 'content_blocked' }, 400);
+  }
+
   const photo = typeof body.photo === 'string' && body.photo.startsWith('data:image/') ? body.photo : null;
   if (photo && photo.length > MAX_IMAGE_CHARS) {
     return json({ error: 'That photo is too large. Try a closer, smaller snap.' }, 413);
@@ -202,7 +238,7 @@ async function coachReply(
   const offsetMinutes = Number(body.timezone_offset_minutes);
   const tzOffset = Number.isFinite(offsetMinutes) ? offsetMinutes : 0;
 
-  const limited = await quotaExceeded(supabase, 'coach');
+  const limited = await quotaExceeded(supabase, 'coach', message.length);
   if (limited) return limited;
 
   const context = await buildLogContext(supabase, userId, localDay, tzOffset);

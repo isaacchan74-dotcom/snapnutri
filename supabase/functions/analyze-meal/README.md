@@ -53,7 +53,22 @@ The function loads that meal, the caller's goal and targets, and that day's othe
 to `meals.ai_insight`. If the meal already has one, the stored copy is returned and OpenAI is not
 called, so each meal costs at most one text call. Requires `supabase/meal-insights.sql`.
 
-There is no chat mode. The OpenAI key never leaves the function. After code changes:
+**Ask Pika (coach chat)**
+
+```json
+{ "mode": "coach", "message": "What should I eat for dinner?", "history": [], "persona": "pika" }
+```
+
+Daily caps (enforced in this function via `consume_ai_quota`, not only in the UI):
+
+- Snap: 20 photo analyses per user per day
+- Coach: 20 messages **and** 2,000 characters of user input per user per day
+
+Blocked chat input (cheap keyword check, no extra model call) returns
+`{ "code": "content_blocked" }` without calling OpenAI. Hitting the cap returns
+`{ "code": "quota" }`. Requires `supabase/ai-usage-limits.sql`.
+
+The OpenAI key never leaves the function. After code changes:
 
 ```powershell
 npx supabase functions deploy analyze-meal

@@ -2,8 +2,20 @@ import { localDayKey } from '../lib/dates';
 import { supabase } from '../lib/supabase';
 import type { CoachAskInput } from '../types/coach';
 
+export type CoachGuardKind = 'quota' | 'content_blocked';
+
+export class CoachGuardError extends Error {
+  readonly kind: CoachGuardKind;
+
+  constructor(kind: CoachGuardKind, message: string) {
+    super(message);
+    this.name = 'CoachGuardError';
+    this.kind = kind;
+  }
+}
+
 export async function askCoach(input: CoachAskInput): Promise<string> {
-  const { data, error } = await supabase.functions.invoke<{ reply?: string; error?: string }>(
+  const { data, error } = await supabase.functions.invoke<{ reply?: string; error?: string; code?: string }>(
     'analyze-meal',
     {
       body: {
@@ -19,9 +31,12 @@ export async function askCoach(input: CoachAskInput): Promise<string> {
   );
 
   if (error) {
-    // supabase-js keeps a failed function's JSON body on error.context, not data.
-    const fromBody = await readErrorBody(error);
-    throw new Error(friendlyCoachError(fromBody || error.message));
+    const body = await readErrorPayload(error);
+    throw guardOrFriendly(body?.error || error.message, body?.code);
+  }
+
+  if (data?.code === 'quota' || data?.code === 'content_blocked') {
+    throw new CoachGuardError(data.code, data.error || defaultGuardMessage(data.code));
   }
 
   if (!data?.reply?.trim()) {
@@ -31,15 +46,34 @@ export async function askCoach(input: CoachAskInput): Promise<string> {
   return data.reply.trim();
 }
 
-async function readErrorBody(error: unknown): Promise<string | null> {
+async function readErrorPayload(error: unknown): Promise<{ error?: string; code?: string } | null> {
   const context = (error as { context?: unknown }).context;
   if (!(context instanceof Response)) return null;
   try {
-    const body = (await context.clone().json()) as { error?: unknown };
-    return typeof body.error === 'string' ? body.error : null;
+    return (await context.clone().json()) as { error?: string; code?: string };
   } catch {
     return null;
   }
+}
+
+function defaultGuardMessage(kind: CoachGuardKind): string {
+  return kind === 'quota'
+    ? "You've reached today's AI limit — come back tomorrow"
+    : 'I only help with nutrition and fitness. Try a question about meals, goals, or how your day looks.';
+}
+
+function guardOrFriendly(message: string, code?: string): Error {
+  if (code === 'quota' || code === 'content_blocked') {
+    return new CoachGuardError(code, message || defaultGuardMessage(code));
+  }
+  const lower = message.toLowerCase();
+  if (lower.includes("today's ai limit") || lower.includes('come back tomorrow')) {
+    return new CoachGuardError('quota', message);
+  }
+  if (lower.includes('only help with nutrition')) {
+    return new CoachGuardError('content_blocked', message);
+  }
+  return new Error(friendlyCoachError(message));
 }
 
 function friendlyCoachError(message: string): string {
