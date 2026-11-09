@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { Icon, type IconName } from '../../ui/Icon';
+import { BackButton } from '../../ui/BackButton';
 import { PIKA_HAPPY, PIKA_RESTING } from '../../ui/Pika';
+
+const WELCOME_INDEX_KEY = 'snapnutri.welcomeIndex';
 
 const SLIDES: { eyebrow: string; title: string; text: string; art: string; icon: IconName }[] = [
   {
@@ -31,12 +34,20 @@ const SLIDES: { eyebrow: string; title: string; text: string; art: string; icon:
 /** The walk-in: what a brand-new visitor sees before signing up. */
 export function WelcomePage() {
   const navigate = useNavigate();
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() => {
+    const saved = Number(sessionStorage.getItem(WELCOME_INDEX_KEY));
+    return Number.isInteger(saved) && saved >= 0 && saved < SLIDES.length ? saved : 0;
+  });
   const slide = SLIDES[index];
   const last = index === SLIDES.length - 1;
 
+  useEffect(() => {
+    sessionStorage.setItem(WELCOME_INDEX_KEY, String(index));
+  }, [index]);
+
   return (
     <div className="walk-in">
+      {index > 0 ? <BackButton onClick={() => setIndex(index - 1)} /> : null}
       <div className="brand center">
         SnapNutri<span style={{ color: 'var(--accent)' }}>.</span>
       </div>

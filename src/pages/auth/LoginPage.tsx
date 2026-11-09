@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '../../store/authStore';
-import { Icon } from '../../ui/Icon';
+import { BackButton } from '../../ui/BackButton';
 import { Pika } from '../../ui/Pika';
 
 export function LoginPage() {
+  const navigate = useNavigate();
   const signIn = useAuthStore((state) => state.signIn);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,9 +26,7 @@ export function LoginPage() {
 
   return (
     <>
-      <Link className="iconbtn" to="/welcome" aria-label="Back to welcome">
-        <Icon name="back" />
-      </Link>
+      <BackButton onClick={() => navigate('/welcome')} />
       <section className="auth-hero">
         <Pika happy />
         <div className="brand">

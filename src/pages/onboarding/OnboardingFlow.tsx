@@ -6,12 +6,38 @@ import { ACTIVITY_OPTIONS, GENDER_OPTIONS, GOAL_OPTIONS, INPUT_LIMITS } from '..
 import { cmToFeetInches, feetInchesToCm, kgToLb, lbToKg, type HeightUnit, type WeightUnit } from '../../lib/units';
 import { useAuthStore } from '../../store/authStore';
 import { useOnboardingStore } from '../../store/onboardingStore';
+import { BackButton } from '../../ui/BackButton';
+import { Pika } from '../../ui/Pika';
+
 type FieldKey = 'name' | 'gender' | 'age' | 'height' | 'weight' | 'activity' | 'goal';
 
 const FIELD_ORDER: FieldKey[] = ['name', 'gender', 'age', 'height', 'weight', 'activity', 'goal'];
 
 export function OnboardingFlow() {
-  return <OnboardingPage />;
+  const step = useOnboardingStore((state) => state.step);
+  return step === 'form' ? <OnboardingPage /> : <IntroStep />;
+}
+
+function IntroStep() {
+  const setStep = useOnboardingStore((state) => state.setStep);
+  return (
+    <div className="walk-in">
+      <div className="brand center">
+        SnapNutri<span style={{ color: 'var(--accent)' }}>.</span>
+      </div>
+      <section className="walk-slide center">
+        <Pika happy />
+        <p className="eyebrow">Your daily guide</p>
+        <h1>Let’s set your targets.</h1>
+        <p className="muted">A few details about you. Then we can shape a gentle calorie and macro rhythm.</p>
+      </section>
+      <div className="sticky-actions">
+        <button className="btn" onClick={() => setStep('form')}>
+          Start my journal
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function OnboardingPage() {
@@ -21,17 +47,12 @@ function OnboardingPage() {
   const update = draft.update;
   const reset = draft.reset;
 
-  const [name, setName] = useState(draft.name);
-  const [age, setAge] = useState(draft.age != null ? String(draft.age) : '');
-  const imperial = draft.height ? cmToFeetInches(draft.height) : null;
-  const [cm, setCm] = useState(draft.height ? String(Math.round(draft.height)) : '');
-  const [feet, setFeet] = useState(imperial ? String(imperial.feet) : '');
-  const [inches, setInches] = useState(imperial ? String(imperial.inches) : '');
-  const [weightValue, setWeightValue] = useState(
-    draft.weight != null
-      ? String(Math.round(draft.weightUnit === 'kg' ? draft.weight : kgToLb(draft.weight)))
-      : '',
-  );
+  const name = draft.name;
+  const age = draft.ageText;
+  const cm = draft.cmText;
+  const feet = draft.feetText;
+  const inches = draft.inchesText;
+  const weightValue = draft.weightText;
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -47,13 +68,10 @@ function OnboardingPage() {
     if (unit === draft.heightUnit) return;
     if (unit === 'cm') {
       const next = feetInchesToCm(Number(feet) || 0, Number(inches) || 0);
-      if (next > 0) setCm(String(Math.round(next)));
+      if (next > 0) update({ cmText: String(Math.round(next)), height: Math.round(next) });
     } else {
       const next = cmToFeetInches(Number(cm) || 0);
-      if (Number(cm)) {
-        setFeet(String(next.feet));
-        setInches(String(next.inches));
-      }
+      if (Number(cm)) update({ feetText: String(next.feet), inchesText: String(next.inches) });
     }
     draft.setHeightUnit(unit);
   };
@@ -63,7 +81,8 @@ function OnboardingPage() {
     const parsed = Number.parseFloat(weightValue);
     if (Number.isFinite(parsed) && parsed >= 0) {
       const kg = draft.weightUnit === 'kg' ? parsed : lbToKg(parsed);
-      setWeightValue(String(Math.round((unit === 'kg' ? kg : kgToLb(kg)) * 10) / 10));
+      const display = String(Math.round((unit === 'kg' ? kg : kgToLb(kg)) * 10) / 10);
+      update({ weightText: display, weight: Math.round(kg * 10) / 10 });
     }
     draft.setWeightUnit(unit);
   };
@@ -168,6 +187,7 @@ function OnboardingPage() {
         void submit();
       }}
     >
+      <BackButton onClick={() => draft.setStep('intro')} />
       <header className="pagehead">
         <p className="eyebrow">Your daily guide</p>
         <h1>A few details, then you’re in.</h1>
@@ -186,7 +206,6 @@ function OnboardingPage() {
             aria-invalid={Boolean(errors.name)}
             aria-describedby={errors.name ? 'err-name' : undefined}
             onChange={(event) => {
-              setName(event.target.value);
               update({ name: event.target.value });
               clearError('name');
             }}
@@ -220,7 +239,9 @@ function OnboardingPage() {
             aria-invalid={Boolean(errors.age)}
             aria-describedby={errors.age ? 'err-age' : undefined}
             onChange={(event) => {
-              setAge(event.target.value.replace(/\D/g, ''));
+              const ageText = event.target.value.replace(/\D/g, '');
+              const parsed = Number.parseInt(ageText, 10);
+              update({ ageText, age: Number.isFinite(parsed) ? parsed : null });
               clearError('age');
             }}
           />
@@ -241,7 +262,9 @@ function OnboardingPage() {
               value={cm}
               aria-invalid={Boolean(errors.height)}
               onChange={(event) => {
-                setCm(event.target.value.replace(/\D/g, ''));
+                const cmText = event.target.value.replace(/\D/g, '');
+                const parsed = Number.parseFloat(cmText);
+                update({ cmText, height: Number.isFinite(parsed) ? parsed : null });
                 clearError('height');
               }}
             />
@@ -258,7 +281,9 @@ function OnboardingPage() {
                 value={feet}
                 aria-invalid={Boolean(errors.height)}
                 onChange={(event) => {
-                  setFeet(event.target.value.replace(/\D/g, ''));
+                  const feetText = event.target.value.replace(/\D/g, '');
+                  const height = feetInchesToCm(Number(feetText) || 0, Number(inches) || 0);
+                  update({ feetText, height: height > 0 ? height : null });
                   clearError('height');
                 }}
               />
@@ -273,7 +298,9 @@ function OnboardingPage() {
                 value={inches}
                 aria-invalid={Boolean(errors.height)}
                 onChange={(event) => {
-                  setInches(event.target.value.replace(/\D/g, ''));
+                  const inchesText = event.target.value.replace(/\D/g, '');
+                  const height = feetInchesToCm(Number(feet) || 0, Number(inchesText) || 0);
+                  update({ inchesText, height: height > 0 ? height : null });
                   clearError('height');
                 }}
               />
@@ -302,7 +329,10 @@ function OnboardingPage() {
             value={weightValue}
             aria-invalid={Boolean(errors.weight)}
             onChange={(event) => {
-              setWeightValue(event.target.value.replace(/[^\d.]/g, ''));
+              const weightText = event.target.value.replace(/[^\d.]/g, '');
+              const parsed = Number.parseFloat(weightText);
+              const kg = !Number.isFinite(parsed) ? null : draft.weightUnit === 'kg' ? parsed : lbToKg(parsed);
+              update({ weightText, weight: kg });
               clearError('weight');
             }}
           />

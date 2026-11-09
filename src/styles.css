@@ -107,6 +107,8 @@ h3{font-size:18px}
 .month-message{text-align:center;margin:23px 12px 0;color:var(--muted);font-size:12px;font-family:'Fraunces';font-style:italic}
 .backhead{display:flex;align-items:center;gap:11px;margin:3px 0 20px}
 .backhead h1{font-size:25px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;margin:0 0 14px;padding:4px 0;font-weight:600;font-size:14px;color:var(--ink)}
+.back-btn .icon{width:18px;height:18px;color:var(--accent)}
 .day-date{font-size:12px;color:var(--muted);margin-top:3px}
 .journal-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px}
 .polaroid{padding:8px 8px 13px;background:var(--paper);box-shadow:0 3px 12px #55452e10;border:1px solid var(--line);border-radius:5px;transform:rotate(-2deg);text-align:left;position:relative;min-width:0}

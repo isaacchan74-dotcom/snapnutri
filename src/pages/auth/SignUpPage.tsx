@@ -1,13 +1,14 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '../../store/authStore';
-import { Icon } from '../../ui/Icon';
+import { BackButton } from '../../ui/BackButton';
 import { Pika } from '../../ui/Pika';
 
 const MIN_PASSWORD = 6;
 
 export function SignUpPage() {
+  const navigate = useNavigate();
   const signUp = useAuthStore((state) => state.signUp);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,9 +34,7 @@ export function SignUpPage() {
 
   return (
     <>
-      <Link className="iconbtn" to="/welcome" aria-label="Back to welcome">
-        <Icon name="back" />
-      </Link>
+      <BackButton onClick={() => navigate('/welcome')} />
       <section className="auth-hero">
         <Pika />
         <div className="brand">
