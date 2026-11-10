@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const MODEL = 'gpt-4o-mini';
+const MODEL = 'gpt-6.1-terra';
 const MAX_IMAGE_CHARS = 1_800_000;
 const MAX_COACH_MESSAGE = 1_200;
 const MAX_HISTORY = 12;
@@ -190,8 +190,9 @@ async function analyzeMeal(supabase: SupabaseClient, openaiKey: string, body: Re
   if (limited) return limited;
 
   const completion = await completeChat(openaiKey, {
-    temperature: 0.2,
-    max_tokens: 420,
+    // Terra is a reasoning model: no temperature, and reasoning tokens count toward this cap.
+    reasoning_effort: 'low',
+    max_completion_tokens: 2000,
     response_format: { type: 'json_object' },
     messages: [
       { role: 'system', content: ANALYZE_PROMPT },
@@ -199,7 +200,7 @@ async function analyzeMeal(supabase: SupabaseClient, openaiKey: string, body: Re
         role: 'user',
         content: [
           { type: 'text', text: 'Analyze this meal photo for a nutrition log.' },
-          { type: 'image_url', image_url: { url: image, detail: 'low' } },
+          { type: 'image_url', image_url: { url: image, detail: 'high' } },
         ],
       },
     ],
@@ -252,8 +253,8 @@ async function coachReply(
     : message;
 
   const completion = await completeChat(openaiKey, {
-    temperature: 0.5,
-    max_tokens: 360,
+    reasoning_effort: 'none',
+    max_completion_tokens: 600,
     messages: [
       { role: 'system', content: COACH_PROMPT },
       ...(body.persona === 'pika' ? [{ role: 'system', content: PIKA_VOICE }] : []),
@@ -436,8 +437,8 @@ async function mealInsight(
   );
 
   const completion = await completeChat(openaiKey, {
-    temperature: 0.4,
-    max_tokens: 220,
+    reasoning_effort: 'none',
+    max_completion_tokens: 400,
     response_format: { type: 'json_object' },
     messages: [
       { role: 'system', content: INSIGHT_PROMPT },
@@ -748,7 +749,8 @@ async function completeChat(
   });
 
   if (!openaiResponse.ok) {
-    await openaiResponse.text();
+    // Log OpenAI's reason (e.g. a rejected parameter) so it shows in the function logs.
+    console.error('OpenAI error', openaiResponse.status, (await openaiResponse.text()).slice(0, 500));
     return {
       ok: false,
       response: json(

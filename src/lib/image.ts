@@ -1,5 +1,5 @@
-const MAX_EDGE = 768;
-const JPEG_QUALITY = 0.72;
+const MAX_EDGE = 1536;
+const JPEG_QUALITY = 0.85;
 
 /** Shrink a photo before it leaves the device so the Edge Function stays cheap. */
 export async function fileToLowDetailDataUrl(file: File): Promise<string> {

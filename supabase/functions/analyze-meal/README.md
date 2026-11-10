@@ -1,7 +1,7 @@
 # analyze-meal Edge Function
 
 The Snap tab sends a compressed meal photo here. This function calls OpenAI
-(`gpt-4o-mini`, image `detail: "low"`). The API key is a **Supabase secret** —
+(`gpt-6.1-terra`, image `detail: "high"`). The API key is a **Supabase secret** —
 never a `VITE_` variable, never in the git repo.
 
 ## Deploy (PowerShell)
