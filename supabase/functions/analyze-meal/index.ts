@@ -30,7 +30,7 @@ Return ONLY JSON with this shape:
 Rules:
 - If the image is blurry, dark, empty, a screenshot, a person, a room, or not a meal, set needs_retake true, give a short friendly reason, and null the food fields.
 - If you cannot identify the food with reasonable confidence (under 0.55), set needs_retake true.
-- Otherwise estimate a single meal portion for a college student. Integers for calories, one decimal for macros.
+- Otherwise estimate the nutrition of the portion actually visible in the photo. Judge size from the plate, bowl, container, utensils, or hands in the frame, and do not assume a standard serving. Integers for calories, one decimal for macros.
 - food_name should be short and specific (e.g. "Dining hall burrito").
 - description is one short plain sentence (under 140 characters) about what you see: main items and rough portion (e.g. "Chicken burrito bowl with rice, black beans, and salsa."). Only mention what is visible.
 - foods lists each visible item separately, short and specific, most prominent first (e.g. ["Chicken thigh", "Brown rice", "Broccoli"]). At most 6 items. Empty array when needs_retake is true.
