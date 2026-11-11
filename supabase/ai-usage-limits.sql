@@ -4,7 +4,7 @@
 --
 -- Limits (must match supabase/functions/analyze-meal/index.ts):
 --   snap  (photo analyze): 20 requests/day, no character cap
---   coach (Ask Pika chat): 20 requests/day AND 2,000 characters of user input/day
+--   coach (Ask Pika chat): 20 requests/day AND 4,000 characters of user input/day
 
 create table if not exists public.ai_usage (
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -33,8 +33,8 @@ returns integer
 language sql
 immutable
 as $$
-  -- 0 = no character cap (photo snaps). Coach is capped at 2,000 input characters/day.
-  select case p_kind when 'coach' then 2000 else 0 end;
+  -- 0 = no character cap (photo snaps). Coach is capped at 4,000 input characters/day.
+  select case p_kind when 'coach' then 4000 else 0 end;
 $$;
 
 drop function if exists public.consume_ai_quota(text);

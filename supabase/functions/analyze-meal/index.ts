@@ -7,7 +7,7 @@ const MAX_HISTORY = 12;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Keep in step with public.ai_daily_limit / ai_daily_char_limit in supabase/ai-usage-limits.sql.
 const DAILY_LIMITS = { snap: 20, coach: 20 } as const;
-const DAILY_CHAR_LIMITS = { snap: 0, coach: 2_000 } as const;
+const DAILY_CHAR_LIMITS = { snap: 0, coach: 4_000 } as const;
 const QUOTA_MESSAGE = "You've reached today's AI limit — come back tomorrow";
 const SAFETY_MESSAGE = 'I only help with nutrition and fitness. Try a question about meals, goals, or how your day looks.';
 

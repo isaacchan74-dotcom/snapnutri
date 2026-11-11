@@ -62,7 +62,7 @@ called, so each meal costs at most one text call. Requires `supabase/meal-insigh
 Daily caps (enforced in this function via `consume_ai_quota`, not only in the UI):
 
 - Snap: 20 photo analyses per user per day
-- Coach: 20 messages **and** 2,000 characters of user input per user per day
+- Coach: 20 messages **and** 4,000 characters of user input per user per day
 
 Blocked chat input (cheap keyword check, no extra model call) returns
 `{ "code": "content_blocked" }` without calling OpenAI. Hitting the cap returns
