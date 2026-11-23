@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { formatDay, formatTime, mealTypeOf, summarizeDay, todayKey } from '../../lib/journal';
+import { mealLabel } from '../../types/meal';
 import { useAuthStore } from '../../store/authStore';
 import { BackHead } from '../../ui/BackHead';
 import { useJournalData, usePhotos } from '../../ui/hooks';
@@ -43,15 +44,20 @@ export function DayPage() {
           </section>
           <div className="journal-grid">
             {dayMeals.map((meal) => (
-              <button key={meal.id} className="polaroid" onClick={() => navigate(`/meal/${meal.id}`)}>
+              <div key={meal.id} className="polaroid">
                 <span className="tape" />
-                <MealPhoto meal={meal} urls={urls} className="photo-fallback" />
-                <strong>{meal.food_name}</strong>
-                <small>
-                  {mealTypeOf(meal)} · {formatTime(meal.logged_at)}
-                  {!meal.reviewed ? ' · Unreviewed' : ''}
-                </small>
-              </button>
+                <button className="polaroid-open" onClick={() => navigate(`/meal/${meal.id}`)}>
+                  <MealPhoto meal={meal} urls={urls} className="photo-fallback" />
+                  <strong>{meal.food_name}</strong>
+                  <small>
+                    {mealLabel(mealTypeOf(meal))} · {formatTime(meal.logged_at)}
+                    {!meal.reviewed ? ' · Unreviewed' : ''}
+                  </small>
+                </button>
+                <button className="polaroid-edit" aria-label={`Edit ${meal.food_name}`} onClick={() => navigate(`/meal/${meal.id}/review`)}>
+                  Edit
+                </button>
+              </div>
             ))}
           </div>
         </>

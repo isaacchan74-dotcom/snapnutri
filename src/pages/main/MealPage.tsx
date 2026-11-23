@@ -6,6 +6,7 @@ import { requestMealInsight } from '../../api/mealInsight';
 import { formatDay, formatTime, mealDay, mealTypeOf } from '../../lib/journal';
 import { useMealStore } from '../../store/mealStore';
 import { useUiStore } from '../../store/uiStore';
+import { mealLabel } from '../../types/meal';
 import { BackHead } from '../../ui/BackHead';
 import { useJournalData, usePhotos } from '../../ui/hooks';
 import { MealPhoto } from '../../ui/MealPhoto';
@@ -54,7 +55,9 @@ export function MealPage() {
   }
 
   const day = mealDay(meal);
-  const foods = meal.foods.length ? meal.foods : [meal.food_name];
+  const foods = meal.items.length
+    ? meal.items.map((item) => ({ name: item.name, grams: item.grams }))
+    : (meal.foods.length ? meal.foods : [meal.food_name]).map((name) => ({ name, grams: null }));
 
   const confirmRemove = () =>
     openModal(
@@ -85,7 +88,7 @@ export function MealPage() {
 
   return (
     <>
-      <BackHead title={mealTypeOf(meal)} sub={`${formatDay(day)} · ${formatTime(meal.logged_at)}`} to={`/journal/${day}`} />
+      <BackHead title={mealLabel(mealTypeOf(meal))} sub={`${formatDay(day)} · ${formatTime(meal.logged_at)}`} to={`/journal/${day}`} />
       <MealPhoto meal={meal} urls={urls} className="meal-image" />
       <h2 style={{ margin: '22px 0 7px' }}>{meal.food_name}</h2>
       <p className="notice">{meal.reviewed ? 'Reviewed by you' : 'AI estimate · not reviewed yet'}</p>
@@ -93,8 +96,9 @@ export function MealPage() {
       <section className="card formblock">
         <div className="eyebrow">On your plate</div>
         {foods.map((food, index) => (
-          <div key={`${food}-${index}`} className="settings-row">
-            {food}
+          <div key={`${food.name}-${index}`} className="settings-row">
+            <span>{food.name}</span>
+            {food.grams ? <span className="muted">{Math.round(food.grams)} g</span> : null}
           </div>
         ))}
         <p className="small muted" style={{ marginTop: 10 }}>
@@ -136,7 +140,7 @@ export function MealPage() {
       </button>
       <button
         className="link block"
-        onClick={() => navigate('/coach', { state: { ask: `How does my ${meal.food_name} (${mealTypeOf(meal).toLowerCase()}) fit my day?` } })}
+        onClick={() => navigate('/coach', { state: { ask: `How does my ${meal.food_name} (${mealLabel(mealTypeOf(meal)).toLowerCase()}) fit my day?` } })}
       >
         Ask Pika about this meal ›
       </button>

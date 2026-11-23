@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { formatDay, loggedAtFor, mealsOn } from '../lib/journal';
+import { formatDay, loggedAtFor, mealsOn, nextMealType } from '../lib/journal';
 import { useAuthStore } from '../store/authStore';
 import { useMealStore } from '../store/mealStore';
 import { usePetStore } from '../store/petStore';
 import { useUiStore } from '../store/uiStore';
-import { MEAL_TYPES, type MealType } from '../types/meal';
+import { MEAL_TYPES, mealLabel, type MealType } from '../types/meal';
 
 function ManualMealForm({ day, type }: { day: string; type: MealType }) {
   const navigate = useNavigate();
@@ -67,7 +67,9 @@ function ManualMealForm({ day, type }: { day: string; type: MealType }) {
         </label>
         <select id="manualType" className="field" value={mealType} onChange={(event) => setMealType(event.target.value as MealType)}>
           {MEAL_TYPES.map((item) => (
-            <option key={item}>{item}</option>
+            <option key={item} value={item}>
+              {mealLabel(item)}
+            </option>
           ))}
         </select>
       </div>
@@ -82,6 +84,9 @@ function ManualMealForm({ day, type }: { day: string; type: MealType }) {
 
 export function useManualMeal() {
   const openModal = useUiStore((state) => state.openModal);
-  return (day: string, type: MealType = 'Dinner') =>
-    openModal('Add a little moment', <ManualMealForm day={day} type={type} />);
+  return (day: string, type?: MealType) =>
+    openModal(
+      'Add a little moment',
+      <ManualMealForm day={day} type={type ?? nextMealType(useMealStore.getState().meals, day)} />,
+    );
 }

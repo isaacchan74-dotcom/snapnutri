@@ -68,6 +68,7 @@ h3{font-size:18px}
 .meal-row small{font-size:10px;color:var(--muted)}
 .thumb{width:40px;height:40px;object-fit:cover;border:3px solid var(--paper);border-radius:12px;background:#eae2d4;box-shadow:0 2px 6px #4230220d}
 .plusbox{width:40px;height:40px;border:1px dashed var(--line);border-radius:11px;display:grid;place-items:center;color:var(--accent);font-size:20px}
+.add-meal{display:block;width:100%;margin-top:4px;padding:11px 0;border:1px dashed var(--line);border-radius:12px;color:var(--accent);font-size:12px;font-weight:500;text-align:center}
 .extras{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .extras button{font-size:10px;color:var(--muted);background:var(--bg);border-radius:9px;padding:6px 9px}
 .focus{background:var(--peach);margin-top:15px;padding:17px 18px;border-radius:20px}
@@ -362,3 +363,64 @@ img{max-width:100%}
 .tour-bubble--above:after{bottom:-7px;left:50%;margin-left:-6px;border-top:0;border-left:0}
 .tour-bubble--below:after{top:-7px;left:50%;margin-left:-6px;border-bottom:0;border-right:0}
 .night .tour-hole{box-shadow:0 0 0 200vmax #1a1613cc}
+
+/* Meal capture and pre-analysis details */
+.snap-head,.portion-row,.location-row,.place-buttons,.product-card{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.snap-head{display:grid;grid-template-columns:44px 1fr 44px;margin-bottom:16px}
+.snap-head h1{text-align:center;font-size:24px;margin:0}
+.snap-head .iconbtn{font-size:24px}
+.camera-preview.snap-preview{margin:0;height:clamp(265px,57dvh,580px);border-radius:22px}
+.snap-hint,.detail-photo button{position:absolute;z-index:1;background:#fffcf0e8;border:0;color:#4e4036;border-radius:22px;padding:9px 14px;font-size:12px}
+.snap-hint{top:14px;left:50%;transform:translateX(-50%);white-space:nowrap}
+.snap-day{position:absolute;bottom:14px;left:14px;background:#fffdf8df;color:#65564a}
+.snap-preview .viewfinder{inset:18% 8%;border:0;border-radius:12px;background:linear-gradient(white,white) left top/22px 2px,linear-gradient(white,white) left top/2px 22px,linear-gradient(white,white) right bottom/22px 2px,linear-gradient(white,white) right bottom/2px 22px;background-repeat:no-repeat;opacity:.62;pointer-events:none}
+.snap-modes{max-width:240px;margin:14px auto}
+.camera-spacer{width:42px}
+.detail-photo{position:relative}
+.detail-photo img{display:block;width:100%;height:clamp(215px,37dvh,380px);object-fit:cover;border-radius:20px}
+.detail-photo button{right:12px;top:12px}
+.snap-details h3{font-size:16px;margin:17px 0 9px}
+.snap-details h3 small{font-weight:400;margin-left:5px}
+.snap-details small{color:var(--muted);font-size:12px}
+.location-row,.place-buttons button,.attachment-grid>div,.product-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;color:var(--ink)}
+.location-row{width:100%;padding:12px 14px;text-align:left}
+.location-row>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.place-options .location-row{margin-top:6px}
+.place-options form .field{margin-top:4px}
+.place-buttons{margin:8px 0}
+.place-buttons button{flex:1;padding:10px 2px}
+.product-card{padding:12px 14px;margin-top:12px;background:var(--sage-bg)}
+.product-card strong{display:block;font-size:15px;line-height:1.3}
+.product-card small{display:block;margin-top:3px;line-height:1.4}
+.attachment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.attachment-grid>div{display:flex;flex-direction:column;align-items:center;overflow:hidden;text-align:center;border-radius:18px}
+.attachment-grid>div:first-child{background:var(--sage-bg)}
+.attachment-grid button:first-child{display:flex;flex:1;flex-direction:column;align-items:center;gap:5px;width:100%;min-height:138px;padding:13px 9px;color:inherit}
+.attachment-grid button:focus-visible{outline-offset:-4px}
+.attachment-grid .icon{width:30px;height:30px;color:var(--ink);margin-bottom:4px}
+.attachment-grid strong{max-width:15ch;font-size:15px;line-height:1.2}
+.attachment-grid button small{max-width:17ch;line-height:1.3}
+.portion-row{margin:15px 0 4px}
+.portion-row label{font-size:16px;font-weight:600}
+.portion-row .serving-input{display:inline-block;width:5rem;height:32px;min-height:32px;padding:3px 8px;margin:0 4px 0 0;text-align:center;font-size:16px;border:1px solid var(--line);border-radius:8px;background:var(--sage-bg)}
+.portion-row .serving-input[aria-invalid=true]{border-color:var(--accent)}
+.snap-details textarea{display:block;resize:vertical;min-height:65px;margin-top:6px}
+.analyze-footer{position:sticky;bottom:-22px;background:var(--bg);padding:12px 0;z-index:2}
+.analyze-footer .btn{background:#503d32;color:#fffdf8}
+.barcode-scanner{display:grid;gap:10px}
+.barcode-frame{position:relative;border-radius:14px;overflow:hidden;background:#51483e;min-height:150px}
+.barcode-video{display:block;width:100%;max-height:42dvh;object-fit:cover}
+.barcode-line{position:absolute;left:10%;right:10%;top:50%;height:2px;background:#fffc;border-radius:2px;pointer-events:none}
+.label-picker{position:relative;overflow:hidden}
+.label-picker input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+.label-picker:focus-within{outline:2px solid currentColor}
+
+/* Journal day: each polaroid opens the meal, with a small Edit shortcut on the photo. */
+.polaroid-open{display:block;width:100%;text-align:left}
+.polaroid-edit{position:absolute;top:14px;right:14px;z-index:3;padding:5px 11px;border-radius:999px;background:var(--paper);border:1px solid var(--line);font-size:11px;font-weight:500;box-shadow:0 2px 6px #55452e22}
+/* Review: one line per ingredient — name, grams, remove. */
+.item-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.item-row>.field{flex:1;min-width:0}
+.item-row .grams{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:12px}
+.item-row .grams .field{width:66px;text-align:center;padding-left:6px;padding-right:6px}
+.item-remove{width:30px;height:30px;flex:none;border-radius:50%;color:var(--muted);font-size:18px;line-height:1}

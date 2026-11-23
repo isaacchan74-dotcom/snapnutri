@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 
-import { EXTRA_MEALS, MAIN_MEALS, displayName, loggingStreak, mealTypeOf, summarizeDay, todayKey, formatTime } from '../../lib/journal';
+import { EXTRA_MEALS, MAIN_MEALS, MORE_MEALS, dayFocus, displayName, loggingStreak, mealTypeOf, summarizeDay, todayKey, formatTime } from '../../lib/journal';
+import { mealLabel, type MealType } from '../../types/meal';
 import { useAuthStore } from '../../store/authStore';
 import { levelOf, usePetStore } from '../../store/petStore';
 import { useJournalData, usePhotos } from '../../ui/hooks';
@@ -37,7 +38,11 @@ export function HomePage() {
   const level = levelOf(pet?.xp ?? 0);
   const draft = meals.find((meal) => !meal.reviewed);
   const nextMeal = MAIN_MEALS.find((type) => !todays.some((meal) => mealTypeOf(meal) === type));
-  const vegEnough = summary.vegetables.status === 'Enough';
+  const focus = dayFocus(summary);
+  const hasType = (type: MealType) => todays.some((meal) => mealTypeOf(meal) === type);
+  // Meal 1-3 always show; Meal 4+ show once logged, and the button adds the next one.
+  const mealRows = [...MAIN_MEALS, ...MORE_MEALS.filter(hasType)];
+  const moreMeal = MORE_MEALS.find((type) => !hasType(type));
 
   const speech = night
     ? todays.length
@@ -45,7 +50,7 @@ export function HomePage() {
       : 'Upload a photo, then get some rest.'
     : summary.balanced
       ? `A little care goes a long way. Thanks, ${name}.`
-      : `Pika is ready to see what’s for ${nextMeal ? nextMeal.toLowerCase() : 'a snack'}.`;
+      : `Pika is ready to see ${nextMeal ? `your ${mealLabel(nextMeal).toLowerCase()}` : 'your next snack'}.`;
 
   return (
     <>
@@ -102,9 +107,15 @@ export function HomePage() {
         </button>
       ) : null}
 
+      <section className="focus">
+        <div className="eyebrow">Today’s focus</div>
+        <h3>{focus.title}</h3>
+        <p>{focus.body}</p>
+      </section>
+
       <section className="card meal-list">
         <div className="eyebrow">Today</div>
-        {MAIN_MEALS.map((type) => {
+        {mealRows.map((type) => {
           const meal = todays.find((item) => mealTypeOf(item) === type);
           return (
             <button
@@ -114,26 +125,25 @@ export function HomePage() {
             >
               {meal ? <MealPhoto meal={meal} urls={urls} /> : <span className="plusbox">+</span>}
               <span className="meta">
-                <strong>{type}</strong>
+                <strong>{mealLabel(type)}</strong>
                 <small>{meal ? `${formatTime(meal.logged_at)} · ${meal.food_name}` : 'A little moment for your journal'}</small>
               </span>
               <span className={`chip ${meal ? '' : 'amber'}`}>{meal ? (meal.reviewed ? 'Logged' : 'Draft') : 'Add meal'}</span>
             </button>
           );
         })}
+        {moreMeal ? (
+          <button className="add-meal" onClick={() => startSnap({ day: today, type: moreMeal })}>
+            + Add another meal
+          </button>
+        ) : null}
         <div className="extras">
           {EXTRA_MEALS.map((type) => (
             <button key={type} onClick={() => startSnap({ day: today, type })}>
-              {type} {todays.some((meal) => mealTypeOf(meal) === type) ? '· Logged' : '+'}
+              {type} {hasType(type) ? '· Logged' : '+'}
             </button>
           ))}
         </div>
-      </section>
-
-      <section className="focus">
-        <div className="eyebrow">Today’s focus</div>
-        <h3>Vegetables {vegEnough ? 'look good today.' : 'need more.'}</h3>
-        <p>{vegEnough ? 'A balanced little finish to your day.' : 'Add a side of greens at your next meal.'}</p>
       </section>
     </>
   );

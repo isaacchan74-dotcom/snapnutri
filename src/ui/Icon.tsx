@@ -1,5 +1,17 @@
 // Icon geometry copied from the prototype.
 const PATHS = {
+  Barcode: (
+    <>
+      <path d="M7 3H4a1 1 0 0 0-1 1v3m14-4h3a1 1 0 0 1 1 1v3M3 17v3a1 1 0 0 0 1 1h3m10 0h3a1 1 0 0 0 1-1v-3" />
+      <path d="M7.5 8v8M11 7v10M14 9v6M17 7.5v9" />
+    </>
+  ),
+  NutritionLabel: (
+    <>
+      <path d="M6 2.5h8l5.5 5.5v12.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1Z" />
+      <path d="M14 3v5h5m-11 5h7.5M8 16.5h6" />
+    </>
+  ),
   back: <polyline points="15,18 9,12 15,6" />,
   share: (
     <>

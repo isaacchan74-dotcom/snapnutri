@@ -2,7 +2,13 @@ import { localDayKey, startOfLocalDay } from './dates';
 import type { MealRow, MealType } from '../types/meal';
 import type { ProfileRow } from '../types/profile';
 
+/** The three numbered meals Home always shows. */
 export const MAIN_MEALS: MealType[] = ['Breakfast', 'Lunch', 'Dinner'];
+/** Further numbered meals, added one at a time from Home for people who eat more often. */
+export const MORE_MEALS: MealType[] = ['Meal4', 'Meal5', 'Meal6'];
+export const NUMBERED_MEALS: MealType[] = [...MAIN_MEALS, ...MORE_MEALS];
+/** Numbered meals a balanced day asks for. */
+export const MEAL_GOAL = 3;
 export const EXTRA_MEALS: MealType[] = ['Snack', 'Coffee', 'Drinks'];
 
 /** A macro counts as "Enough" once the day reaches this share of its target. */
@@ -19,6 +25,7 @@ export type DaySummary = {
   regular: number;
   protein: { grams: number; target: number | null; status: Status; share: number };
   carbs: { grams: number; target: number | null; status: Status; share: number };
+  fat: { grams: number; target: number | null; status: Status; share: number };
   vegetables: { servings: number; status: Status; share: number };
   calories: { kcal: number; target: number | null };
   balanced: boolean;
@@ -46,6 +53,12 @@ export function defaultMealType(date = new Date()): MealType {
   return 'Dinner';
 }
 
+/** A new meal takes the first numbered slot still free that day, then counts as a snack. */
+export function nextMealType(meals: MealRow[], day: string): MealType {
+  const used = new Set(mealsOn(meals, day).map(mealTypeOf));
+  return MAIN_MEALS.find((type) => !used.has(type)) ?? 'Snack';
+}
+
 export function mealTypeOf(meal: MealRow): MealType {
   return meal.meal_type ?? defaultMealType(new Date(meal.logged_at));
 }
@@ -68,9 +81,10 @@ export function summarizeDay(meals: MealRow[], day: string, profile: ProfileRow 
 
   const protein = total((meal) => meal.protein);
   const carbs = total((meal) => meal.carbs);
+  const fat = total((meal) => meal.fat);
   const servings = total((meal) => meal.vegetable_servings);
   const types = new Set(dayMeals.map(mealTypeOf));
-  const regular = MAIN_MEALS.filter((type) => types.has(type)).length;
+  const regular = NUMBERED_MEALS.filter((type) => types.has(type)).length;
 
   const summary: DaySummary = {
     meals: dayMeals,
@@ -87,6 +101,12 @@ export function summarizeDay(meals: MealRow[], day: string, profile: ProfileRow 
       status: macroStatus(carbs, profile?.daily_carb_target ?? null, has),
       share: share(carbs, profile?.daily_carb_target ?? null),
     },
+    fat: {
+      grams: fat,
+      target: profile?.daily_fat_target ?? null,
+      status: macroStatus(fat, profile?.daily_fat_target ?? null, has),
+      share: share(fat, profile?.daily_fat_target ?? null),
+    },
     vegetables: {
       servings,
       status: has ? (servings >= VEGETABLE_GOAL ? 'Enough' : 'Need more') : 'Not enough data',
@@ -96,8 +116,63 @@ export function summarizeDay(meals: MealRow[], day: string, profile: ProfileRow 
     balanced: false,
   };
   summary.balanced =
-    regular === 3 && summary.protein.status === 'Enough' && summary.vegetables.status === 'Enough';
+    regular >= MEAL_GOAL && summary.protein.status === 'Enough' && summary.vegetables.status === 'Enough';
   return summary;
+}
+
+/** The one thing most worth doing next, worked out from what was actually eaten that day. */
+export function dayFocus(s: DaySummary): { title: string; body: string } {
+  if (!s.meals.length) {
+    return { title: 'Nothing logged yet today.', body: 'Snap your first meal and Pika will work out what to aim for next.' };
+  }
+  const r = Math.round;
+  const top = (pick: (meal: MealRow) => number) => s.meals.reduce((best, meal) => (pick(meal) > pick(best) ? meal : best));
+  const kcal = s.calories.kcal;
+  const kcalTarget = s.calories.target;
+  const mealsLeft = Math.max(0, MEAL_GOAL - s.regular);
+  const spread = (amount: string) =>
+    mealsLeft > 1 ? `roughly ${amount} at each of your next ${mealsLeft} meals` : `try to fit ${amount} into your next meal or a snack`;
+
+  if (kcalTarget && kcal > kcalTarget * 1.1) {
+    const biggest = top((meal) => meal.calories);
+    return {
+      title: `About ${r(kcal - kcalTarget)} kcal over today’s guide.`,
+      body: `${biggest.food_name} was the biggest part at ${r(biggest.calories)} kcal. Keep what’s left light: lean protein and vegetables.`,
+    };
+  }
+
+  const proteinLow = s.protein.status === 'Need more' && s.protein.target != null;
+  const vegLow = s.vegetables.status === 'Need more';
+  if (proteinLow && (!vegLow || s.protein.share <= s.vegetables.share)) {
+    const target = s.protein.target ?? 0;
+    const gap = r(target - s.protein.grams);
+    const best = top((meal) => meal.protein);
+    const source = best.protein > 0 ? ` Most so far came from ${best.food_name} (${r(best.protein)} g).` : '';
+    return {
+      title: `Protein: ${r(s.protein.grams)} of ${target} g so far.`,
+      body: `About ${gap} g to go — ${spread(`${r(gap / Math.max(1, mealsLeft))} g`)}.${source}`,
+    };
+  }
+  if (vegLow) {
+    const gap = Math.round((VEGETABLE_GOAL - s.vegetables.servings) * 10) / 10;
+    const best = top((meal) => meal.vegetable_servings);
+    const source = best.vegetable_servings > 0 ? ` ${best.food_name} gave you ${best.vegetable_servings} so far.` : ' None of today’s meals had any yet.';
+    return {
+      title: `Vegetables: ${s.vegetables.servings.toFixed(1)} of ${VEGETABLE_GOAL} servings.`,
+      body: `About ${gap} more to go — a cup of leafy greens or half a cup of cooked vegetables is one serving.${source}`,
+    };
+  }
+
+  const left = kcalTarget ? kcalTarget - kcal : null;
+  return {
+    title: `On track: ${r(s.protein.grams)} g protein, ${s.vegetables.servings.toFixed(1)} vegetable servings.`,
+    body:
+      left == null
+        ? `${r(kcal)} kcal logged so far today.`
+        : left > 0
+          ? `${r(kcal)} kcal logged, about ${r(left)} kcal left in today’s guide.`
+          : `${r(kcal)} kcal logged — you’ve reached today’s calorie guide.`,
+  };
 }
 
 export function loggingStreak(meals: MealRow[], now = new Date()): number {

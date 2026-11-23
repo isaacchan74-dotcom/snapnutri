@@ -1,6 +1,7 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { mealDay, mealTypeOf, summarizeDay } from '../../lib/journal';
+import { MEAL_GOAL, mealDay, mealTypeOf, summarizeDay } from '../../lib/journal';
+import { mealLabel } from '../../types/meal';
 import { useAuthStore } from '../../store/authStore';
 import { useJournalData } from '../../ui/hooks';
 import { Pika } from '../../ui/Pika';
@@ -27,7 +28,7 @@ export function ResultPage() {
           <Pika happy />
         </div>
         <div className="eyebrow">A moment, saved</div>
-        <h1 style={{ margin: '10px 0' }}>{mealTypeOf(meal)} logged.</h1>
+        <h1 style={{ margin: '10px 0' }}>{mealLabel(mealTypeOf(meal))} logged.</h1>
         <p className="muted">{vegEnough ? 'You made room for a little green.' : 'Another little memory in your journal.'}</p>
       </div>
       <section className="reward">
@@ -35,7 +36,7 @@ export function ResultPage() {
         <p>{newBonus ? '+80 points · +35 XP · Health +6 for a balanced day' : 'Meal saved with your latest adjustments.'}</p>
       </section>
       <section className="card">
-        <p>{summary.regular === 3 ? 'Three meals logged today.' : `${summary.regular} of 3 meals logged.`}</p>
+        <p>{summary.regular >= MEAL_GOAL ? `${summary.regular} meals logged today.` : `${summary.regular} of ${MEAL_GOAL} meals logged.`}</p>
         <p className="notice" style={{ marginTop: 8 }}>
           Protein · {summary.protein.status}
           <br />

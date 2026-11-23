@@ -18,6 +18,7 @@ import { OnboardingFlow } from '../pages/onboarding/OnboardingFlow';
 import { SetupRequiredPage } from '../pages/SetupRequiredPage';
 import { AnalyzingPage } from '../pages/snap/AnalyzingPage';
 import { CameraPage } from '../pages/snap/CameraPage';
+import { DetailsPage } from '../pages/snap/DetailsPage';
 import { ResultPage } from '../pages/snap/ResultPage';
 import { ReviewPage } from '../pages/snap/ReviewPage';
 import { useAuthStore } from '../store/authStore';
@@ -57,6 +58,7 @@ export function AppRoutes() {
         <Route path="/meal/:mealId/review" element={<ReviewPage />} />
         <Route path="/meal/:mealId/result" element={<ResultPage />} />
         <Route path="/snap" element={<CameraPage />} />
+        <Route path="/snap/details" element={<DetailsPage />} />
         <Route path="/snap/analyzing" element={<AnalyzingPage />} />
         <Route path="/tracker" element={<TrackerPage />} />
         <Route path="/tracker/:nutrient" element={<NutrientPage />} />

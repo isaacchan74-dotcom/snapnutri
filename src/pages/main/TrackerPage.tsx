@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-import { formatDay, summarizeDay, todayKey, VEGETABLE_GOAL } from '../../lib/journal';
+import { dayFocus, formatDay, MEAL_GOAL, summarizeDay, todayKey, VEGETABLE_GOAL } from '../../lib/journal';
 import { useAuthStore } from '../../store/authStore';
 import { useJournalData } from '../../ui/hooks';
 
@@ -11,13 +11,14 @@ export function TrackerPage() {
   const today = todayKey();
   const s = summarizeDay(meals, today, profile);
   const vegEnough = s.vegetables.status === 'Enough';
+  const focus = dayFocus(s);
   const g = (value: number) => Math.round(value);
 
   const rings = [
     { name: 'Protein', status: s.protein.status, value: s.protein.share, detail: `${g(s.protein.grams)} / ${s.protein.target ?? '—'} g` },
     { name: 'Vegetables', status: s.vegetables.status, value: s.vegetables.share, detail: `${s.vegetables.servings.toFixed(1)} / ${VEGETABLE_GOAL} servings` },
     { name: 'Carbs', status: s.carbs.status, value: s.carbs.share, detail: `${g(s.carbs.grams)} / ${s.carbs.target ?? '—'} g` },
-    { name: 'Meals', status: `${s.regular} / 3 meals`, value: (s.regular / 3) * 100, detail: 'Breakfast · Lunch · Dinner' },
+    { name: 'Fat', status: s.fat.status, value: s.fat.share, detail: `${g(s.fat.grams)} / ${s.fat.target ?? '—'} g` },
   ];
 
   return (
@@ -29,7 +30,7 @@ export function TrackerPage() {
       </header>
       <div className="card rings">
         {rings.map((ring) => {
-          const low = ring.status === 'Need more' || (ring.name === 'Meals' && s.regular < 3);
+          const low = ring.status === 'Need more';
           return (
             <button key={ring.name} className="ringbutton" onClick={() => navigate(`/tracker/${ring.name}`)}>
               <div className="ring" style={{ ['--value' as string]: ring.value, ['--color' as string]: `var(--${low ? 'ochre' : 'sage'})` }}>
@@ -45,15 +46,15 @@ export function TrackerPage() {
       </div>
       <section className="focus">
         <div className="eyebrow">Today’s focus</div>
-        <h3>{vegEnough ? 'Vegetables look good today.' : 'Vegetables need more.'}</h3>
-        <p>{vegEnough ? 'A balanced little day so far.' : 'Add a side of greens at your next meal.'}</p>
+        <h3>{focus.title}</h3>
+        <p>{focus.body}</p>
       </section>
       <section className="card formblock">
         <div className="eyebrow" style={{ marginBottom: 9 }}>
           Balanced day
         </div>
         {[
-          [s.regular === 3, '3 meals logged'],
+          [s.regular >= MEAL_GOAL, `${MEAL_GOAL} meals logged`],
           [s.protein.status === 'Enough', 'Protein enough'],
           [vegEnough, 'Vegetables enough'],
         ].map(([ok, text]) => (

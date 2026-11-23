@@ -26,3 +26,6 @@ yarn-error.*
 .expo/
 .vscode/
 .idea/
+
+# Claude Code local config
+.claude/

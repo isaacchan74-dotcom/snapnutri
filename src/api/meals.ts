@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { isMissingSchema, previewDelete, previewGet, previewSet } from '../lib/preview';
-import { isMealType, type MealInput, type MealInsight, type MealRow } from '../types/meal';
+import { isMealType, type MealInput, type MealInsight, type MealItem, type MealRow } from '../types/meal';
 
 const TABLE = 'meals';
 
@@ -15,6 +15,25 @@ export function toMealInsight(value: unknown): MealInsight | null {
     suggestions: row.suggestions.filter((item): item is string => typeof item === 'string'),
     generated_at: typeof row.generated_at === 'string' ? row.generated_at : '',
   };
+}
+
+export function toMealItems(value: unknown): MealItem[] {
+  if (!Array.isArray(value)) return [];
+  const num = (input: unknown) => Math.max(0, Number(input) || 0);
+  const grams = (input: unknown) => (input == null || !(Number(input) > 0) ? null : Number(input));
+  return value
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    .filter((item) => typeof item.name === 'string' && item.name.trim())
+    .map((item) => ({
+      name: String(item.name).trim().slice(0, 60),
+      grams: grams(item.grams),
+      ai_grams: grams(item.ai_grams),
+      calories: num(item.calories),
+      protein: num(item.protein),
+      carbs: num(item.carbs),
+      fat: num(item.fat),
+      vegetable_servings: num(item.vegetable_servings),
+    }));
 }
 
 function toMeal(raw: Record<string, unknown>): MealRow {
@@ -39,6 +58,10 @@ function toMeal(raw: Record<string, unknown>): MealRow {
     vegetable_servings: Number(row.vegetable_servings) || 0,
     reviewed: row.reviewed !== false,
     ai_insight: toMealInsight(row.ai_insight),
+    place_name: typeof row.place_name === 'string' && row.place_name ? row.place_name : null,
+    notes: typeof row.notes === 'string' && row.notes ? row.notes : null,
+    barcode: typeof row.barcode === 'string' && row.barcode ? row.barcode : null,
+    items: toMealItems(row.items),
   };
 }
 
@@ -52,6 +75,27 @@ function journalColumns(input: MealInput): Record<string, unknown> {
   if (input.vegetable_servings !== undefined) columns.vegetable_servings = input.vegetable_servings;
   if (input.reviewed !== undefined) columns.reviewed = input.reviewed;
   return columns;
+}
+
+/** Columns added by supabase/meal-details.sql. Only sent when the user gave them. */
+function detailColumns(input: MealInput): Record<string, unknown> {
+  const columns: Record<string, unknown> = {};
+  if (input.place_name) columns.place_name = input.place_name;
+  if (input.notes) columns.notes = input.notes;
+  if (input.barcode) columns.barcode = input.barcode;
+  return columns;
+}
+
+/** True when Supabase rejected the column that meal-items.sql adds. */
+function isMissingItems(message: string): boolean {
+  const lower = message.toLowerCase();
+  return /\bitems\b/.test(lower) && /column|schema cache|does not exist/.test(lower);
+}
+
+/** True when Supabase rejected a column that meal-details.sql adds. */
+function isMissingDetails(message: string): boolean {
+  const lower = message.toLowerCase();
+  return /place_name|notes|barcode/.test(lower) && /column|schema cache|does not exist/.test(lower);
 }
 
 export async function fetchMeals(userId: string): Promise<MealRow[]> {
@@ -73,6 +117,26 @@ export async function fetchMeal(id: string): Promise<MealRow | null> {
 }
 
 export async function createMeal(userId: string, input: MealInput): Promise<MealRow> {
+  try {
+    return await createWithDetails(userId, input);
+  } catch (error) {
+    if (!(error instanceof Error) || !isMissingItems(error.message)) throw error;
+    // Before meal-items.sql is run, the meal still saves — just without per-ingredient grams.
+    return createWithDetails(userId, { ...input, items: undefined });
+  }
+}
+
+async function createWithDetails(userId: string, input: MealInput): Promise<MealRow> {
+  try {
+    return await createWithJournal(userId, input);
+  } catch (error) {
+    if (!(error instanceof Error) || !isMissingDetails(error.message)) throw error;
+    // Before meal-details.sql is run, the meal still saves — just without place, notes and barcode.
+    return createWithJournal(userId, { ...input, place_name: null, notes: null, barcode: null });
+  }
+}
+
+async function createWithJournal(userId: string, input: MealInput): Promise<MealRow> {
   try {
     return await insertMeal(userId, input, true);
   } catch (error) {
@@ -97,6 +161,8 @@ async function insertMeal(userId: string, input: MealInput, withJournal: boolean
       ...(input.photo_path ? { photo_path: input.photo_path } : {}),
       ...(input.description ? { description: input.description } : {}),
       ...(withJournal ? journalColumns(input) : {}),
+      ...detailColumns(input),
+      ...(input.items?.length ? { items: input.items } : {}),
     })
     .select('*')
     .single();
@@ -106,6 +172,15 @@ async function insertMeal(userId: string, input: MealInput, withJournal: boolean
 }
 
 export async function updateMeal(id: string, input: MealInput): Promise<MealRow> {
+  try {
+    return await updateWithJournal(id, input);
+  } catch (error) {
+    if (!(error instanceof Error) || !isMissingItems(error.message)) throw error;
+    return updateWithJournal(id, { ...input, items: undefined });
+  }
+}
+
+async function updateWithJournal(id: string, input: MealInput): Promise<MealRow> {
   try {
     return await patchMeal(id, input, true);
   } catch (error) {
@@ -127,6 +202,7 @@ async function patchMeal(id: string, input: MealInput, withJournal: boolean): Pr
       logged_at: input.logged_at,
       ...(input.description !== undefined ? { description: input.description } : {}),
       ...(withJournal ? journalColumns(input) : {}),
+      ...(input.items !== undefined ? { items: input.items } : {}),
     })
     .eq('id', id)
     .select('*')

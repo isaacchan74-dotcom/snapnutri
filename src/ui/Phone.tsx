@@ -27,8 +27,8 @@ export function Phone({ children, nav = false }: PhoneProps) {
   const profile = useAuthStore((state) => state.profile);
   const showNav = nav && !NO_NAV.some((pattern) => pattern.test(pathname));
   const night = Boolean(profile?.night_mode);
-  // Pika floats on the main tabs, but not where Pika is already the whole page.
-  const showPika = showNav && !pathname.startsWith('/coach') && !pathname.startsWith('/pet');
+  // Ask Pika floats on Home only; the other tabs stay clear.
+  const showPika = showNav && pathname === '/home';
 
   useEffect(() => {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', night ? '#2E2925' : '#F7F2E9');

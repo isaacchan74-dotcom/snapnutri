@@ -2,12 +2,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { mealTypeOf, summarizeDay, todayKey } from '../../lib/journal';
 import { useAuthStore } from '../../store/authStore';
-import type { MealRow } from '../../types/meal';
+import { mealLabel, type MealRow } from '../../types/meal';
 import { BackHead } from '../../ui/BackHead';
 import { useJournalData, usePhotos } from '../../ui/hooks';
 import { MealPhoto } from '../../ui/MealPhoto';
 
-const NUTRIENTS = ['Protein', 'Vegetables', 'Carbs', 'Meals'] as const;
+const NUTRIENTS = ['Protein', 'Vegetables', 'Carbs', 'Fat'] as const;
 type Nutrient = (typeof NUTRIENTS)[number];
 
 export function NutrientPage() {
@@ -23,26 +23,26 @@ export function NutrientPage() {
     Protein: `${Math.round(s.protein.grams)} g`,
     Vegetables: `${s.vegetables.servings.toFixed(1)} servings`,
     Carbs: `${Math.round(s.carbs.grams)} g`,
-    Meals: `${s.regular} meals`,
+    Fat: `${Math.round(s.fat.grams)} g`,
   }[nutrient];
   const status = {
     Protein: s.protein.status,
     Vegetables: s.vegetables.status,
     Carbs: s.carbs.status,
-    Meals: `${s.regular} of 3 logged`,
+    Fat: s.fat.status,
   }[nutrient];
   const target = {
     Protein: s.protein.target ? `Your daily guide is about ${s.protein.target} g.` : '',
     Vegetables: 'A balanced day has about 2½ servings.',
     Carbs: s.carbs.target ? `Your daily guide is about ${s.carbs.target} g.` : '',
-    Meals: 'Breakfast, lunch and dinner.',
+    Fat: s.fat.target ? `Your daily guide is about ${s.fat.target} g.` : '',
   }[nutrient];
   const perMeal = (meal: MealRow) =>
     ({
       Protein: `${meal.protein} g`,
       Vegetables: `${meal.vegetable_servings} servings`,
       Carbs: `${meal.carbs} g`,
-      Meals: mealTypeOf(meal),
+      Fat: `${meal.fat} g`,
     })[nutrient];
 
   return (
@@ -63,7 +63,7 @@ export function NutrientPage() {
             <button key={meal.id} className="meal-row" onClick={() => navigate(`/meal/${meal.id}`)}>
               <MealPhoto meal={meal} urls={urls} />
               <span className="meta">
-                <strong>{mealTypeOf(meal)}</strong>
+                <strong>{mealLabel(mealTypeOf(meal))}</strong>
                 <small>
                   {meal.food_name} · {perMeal(meal)}
                 </small>

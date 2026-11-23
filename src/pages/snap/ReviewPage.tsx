@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { localDayKey } from '../../lib/dates';
+import { blankItem, itemsDelta, scaleItem } from '../../lib/items';
 import { formatDay, loggedAtFor, mealDay, mealTypeOf, summarizeDay } from '../../lib/journal';
 import { useAuthStore } from '../../store/authStore';
 import { useMealStore } from '../../store/mealStore';
 import { usePetStore } from '../../store/petStore';
 import { useUiStore } from '../../store/uiStore';
-import { MEAL_TYPES, SHARED_OPTIONS, type MealInput, type MealRow, type MealType } from '../../types/meal';
+import { MEAL_TYPES, SHARED_OPTIONS, mealLabel, type MealInput, type MealItem, type MealRow, type MealType } from '../../types/meal';
 import { Icon } from '../../ui/Icon';
 import { useJournalData, usePhotos } from '../../ui/hooks';
 import { MealPhoto } from '../../ui/MealPhoto';
@@ -19,11 +20,16 @@ const PORTIONS: [number, string][] = [
   [0.25, '¼'],
 ];
 
+/** A food being edited: `base` holds the last known weight and its nutrition, `grams` what is typed. */
+type WorkItem = { base: MealItem; grams: string };
+
+const live = (item: WorkItem): MealItem => scaleItem(item.base, Number(item.grams) || 0);
+
 type Working = {
   name: string;
   type: MealType;
   day: string;
-  foods: string[];
+  items: WorkItem[];
   portion: number;
   shared: string;
   calories: number;
@@ -38,7 +44,9 @@ function toWorking(meal: MealRow): Working {
     name: meal.food_name,
     type: mealTypeOf(meal),
     day: mealDay(meal),
-    foods: meal.foods.length ? meal.foods : [meal.food_name],
+    items: (meal.items.length ? meal.items : (meal.foods.length ? meal.foods : [meal.food_name]).map((name) => blankItem(name))).map(
+      (base) => ({ base, grams: base.grams ? String(Math.round(base.grams)) : '' }),
+    ),
     portion: meal.portion,
     shared: meal.shared_with,
     calories: meal.calories,
@@ -68,7 +76,7 @@ export function ReviewPage() {
   const { mealId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const confidence = (location.state as { confidence?: number } | null)?.confidence;
+  const { confidence, learned = [] } = (location.state as { confidence?: number; learned?: string[] } | null) ?? {};
   const profile = useAuthStore((state) => state.profile);
   const { meals, loading } = useJournalData();
   const save = useMealStore((state) => state.save);
@@ -94,7 +102,8 @@ export function ReviewPage() {
 
   const toInput = (reviewed: boolean): MealInput => {
     const time = new Date(meal.logged_at);
-    const foods = work.foods.map((food) => food.trim()).filter(Boolean);
+    const items = work.items.map(live).map((item) => ({ ...item, name: item.name.trim() })).filter((item) => item.name);
+    const foods = items.map((item) => item.name);
     return {
       food_name: work.name.trim() || foods[0] || 'A little meal',
       calories: Math.max(0, Math.round(work.calories)),
@@ -104,6 +113,7 @@ export function ReviewPage() {
       logged_at: work.day === mealDay(meal) ? meal.logged_at : loggedAtFor(work.day, time),
       meal_type: work.type,
       foods,
+      items,
       portion: work.portion,
       shared_with: work.shared,
       vegetable_servings: Math.max(0, round1(work.vegetables)),
@@ -168,6 +178,10 @@ export function ReviewPage() {
     const scale = portion / (work.portion || 1);
     set({
       portion,
+      items: work.items.map((item) => ({
+        base: item.base.grams ? scaleItem(item.base, item.base.grams * scale) : item.base,
+        grams: Number(item.grams) ? String(Math.round(Number(item.grams) * scale)) : item.grams,
+      })),
       calories: Math.round(work.calories * scale),
       protein: round1(work.protein * scale),
       carbs: round1(work.carbs * scale),
@@ -176,15 +190,33 @@ export function ReviewPage() {
     });
   };
 
+  /** Swaps the food list and moves the meal's totals by however much the foods changed. */
+  const setItems = (items: WorkItem[]) => {
+    const shift = itemsDelta(work.items.map(live), items.map(live));
+    set({
+      items,
+      calories: Math.max(0, Math.round(work.calories + shift.calories)),
+      protein: Math.max(0, round1(work.protein + shift.protein)),
+      carbs: Math.max(0, round1(work.carbs + shift.carbs)),
+      fat: Math.max(0, round1(work.fat + shift.fat)),
+      vegetables: Math.max(0, round1(work.vegetables + shift.vegetable_servings)),
+    });
+  };
+  const editItem = (index: number, patch: Partial<WorkItem>) =>
+    setItems(work.items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  const handAdded = work.items.some((item) => item.base.ai_grams == null && item.base.calories === 0);
+
   const addFood = () => {
     let draft = '';
+    let grams = '';
     openModal(
       'Add another food',
       <form
         onSubmit={(event) => {
           event.preventDefault();
           if (!draft.trim()) return;
-          setWork((current) => (current ? { ...current, foods: [...current.foods, draft.trim()] } : current));
+          const item: WorkItem = { base: blankItem(draft.trim(), Number(grams) || null), grams };
+          setWork((current) => (current ? { ...current, items: [...current.items, item] } : current));
           closeModal();
         }}
       >
@@ -192,6 +224,11 @@ export function ReviewPage() {
           Food name
         </label>
         <input id="foodName" className="field" placeholder="e.g. avocado" maxLength={60} onChange={(event) => (draft = event.target.value)} />
+        <label className="formlabel formblock" htmlFor="foodGrams">
+          Grams (optional)
+        </label>
+        <input id="foodGrams" className="field" inputMode="numeric" placeholder="e.g. 80" maxLength={5} onChange={(event) => (grams = event.target.value.replace(/\D/g, ''))} />
+        <p className="notice formblock">Then update the calories and macros yourself — Pika can’t estimate a typed-in food yet.</p>
         <button className="btn">Add food</button>
       </form>,
     );
@@ -231,7 +268,9 @@ export function ReviewPage() {
           <span className="formlabel">Meal</span>
           <select className="field" aria-label="Meal category" value={work.type} onChange={(event) => set({ type: event.target.value as MealType })}>
             {MEAL_TYPES.map((type) => (
-              <option key={type}>{type}</option>
+              <option key={type} value={type}>
+                {mealLabel(type)}
+              </option>
             ))}
           </select>
         </label>
@@ -253,28 +292,42 @@ export function ReviewPage() {
           <span className="formlabel">Name in your journal</span>
           <input className="field" maxLength={80} value={work.name} onChange={(event) => set({ name: event.target.value })} />
         </label>
-        {work.foods.map((food, index) => (
-          <div key={index} className="food-row">
-            <details open={index === 0}>
-              <summary>{food || 'New food'}</summary>
-              {index === 0 && unsure ? <p>We’re not fully sure. Fix the name if it’s off.</p> : null}
-              <div className="food-input">
-                <input
-                  className="field"
-                  aria-label={`Food ${index + 1}`}
-                  maxLength={60}
-                  value={food}
-                  onChange={(event) => set({ foods: work.foods.map((item, i) => (i === index ? event.target.value : item)) })}
-                />
-              </div>
-              <button className="link" onClick={() => set({ foods: work.foods.filter((_, i) => i !== index) })}>
-                Remove food
-              </button>
-            </details>
+        <p className="formlabel" style={{ marginTop: 14 }}>
+          Ingredients · grams
+        </p>
+        {unsure ? <p className="notice">We’re not fully sure about this one. Fix a name or a weight if it’s off.</p> : null}
+        {learned.length ? <p className="notice">Started from your usual portion of {learned.join(', ').toLowerCase()}.</p> : null}
+        {work.items.map((item, index) => (
+          <div key={index} className="item-row">
+            <input
+              className="field"
+              aria-label={`Food ${index + 1}`}
+              maxLength={60}
+              value={item.base.name}
+              onChange={(event) => set({ items: work.items.map((it, i) => (i === index ? { ...it, base: { ...it.base, name: event.target.value } } : it)) })}
+            />
+            <label className="grams">
+              <input
+                className="field"
+                inputMode="numeric"
+                aria-label={`${item.base.name || `Food ${index + 1}`} grams`}
+                placeholder="—"
+                maxLength={5}
+                value={item.grams}
+                onChange={(event) => editItem(index, { grams: event.target.value.replace(/\D/g, '') })}
+              />
+              <span>g</span>
+            </label>
+            <button className="item-remove" aria-label={`Remove ${item.base.name || `food ${index + 1}`}`} onClick={() => setItems(work.items.filter((_, i) => i !== index))}>
+              ×
+            </button>
           </div>
         ))}
+        <p className="notice" style={{ marginTop: 10 }}>
+          {handAdded ? 'Foods you typed in don’t change the estimate — adjust the numbers below.' : 'Change a weight and the estimate below follows.'}
+        </p>
         <button className="link" onClick={addFood}>
-          + Add another food or enter manually
+          + Add another food
         </button>
       </section>
 

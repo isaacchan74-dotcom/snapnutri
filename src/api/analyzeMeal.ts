@@ -1,10 +1,35 @@
 import { supabase } from '../lib/supabase';
 import type { AnalyzeMealResult } from '../types/analyze';
+import type { SnapDraft } from '../types/snap';
 
-export async function analyzeMealPhoto(imageDataUrl: string): Promise<AnalyzeMealResult> {
+/** Sends the photo plus everything the user added on the details screen. */
+export async function analyzeMealPhoto(imageDataUrl: string, draft?: SnapDraft): Promise<AnalyzeMealResult> {
+  const product = draft?.product;
   const { data, error } = await supabase.functions.invoke<AnalyzeMealResult | { error?: string }>(
     'analyze-meal',
-    { body: { image: imageDataUrl } },
+    {
+      body: {
+        image: imageDataUrl,
+        ...(draft?.label ? { label: draft.label } : {}),
+        ...(draft && draft.servings !== 1 ? { servings: draft.servings } : {}),
+        ...(draft?.notes.trim() ? { notes: draft.notes.trim() } : {}),
+        ...(draft?.place ? { place: draft.place.name, place_type: draft.place.type } : {}),
+        ...(product
+          ? {
+              product: {
+                name: product.name,
+                brand: product.brand,
+                basis: product.basis,
+                serving_size: product.servingSize,
+                calories: product.calories,
+                protein: product.protein,
+                carbs: product.carbs,
+                fat: product.fat,
+              },
+            }
+          : {}),
+      },
+    },
   );
 
   if (error) {

@@ -1,9 +1,13 @@
+import type { MealItem } from './meal';
+
 export type MealEstimate = {
   food_name: string;
   /** One short sentence about what the AI sees. May be empty. */
   description?: string;
   /** Visible items, most prominent first. Older function deploys omit it. */
   foods?: string[];
+  /** Each food with its estimated grams and nutrition. Older function deploys omit it. */
+  items?: MealItem[];
   vegetable_servings?: number;
   calories: number;
   protein: number;
